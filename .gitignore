@@ -1,0 +1,4 @@
+.vscode
+babel-env
+src/evolveHamming/outputs
+*.exe
