@@ -1,5 +1,6 @@
 .vscode
 babel-env
 src/evolveHamming/outputs
+src/geneticSimilarity/outputs
 src/geneticSimilaritySimplicity/outputs
 *.exe
