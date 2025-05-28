@@ -180,10 +180,10 @@ def umap_clusters():
     """Run UMAP first, then clustering with epsilon adjusted by diversity."""
     # Parameters
     gamma = -4
-    alpha = 1
+    alpha = 10
     N = 1000
     L = 16
-    mu = 0.01
+    mu = 0.001
     
     # Load language data
     base_dir = "src/geneticSimilaritySimplicity/outputs/languages"
@@ -357,7 +357,7 @@ def umap_clusters():
     # Get generation info for filename
     gen_suffix = f"_gen_{last_gen}" if 'last_gen' in locals() else ""
     
-    output_file = f"{output_dir}/umap_clusters_g_{gamma}_a_{alpha}_N_{N}_L_{L}{gen_suffix}.png"
+    output_file = f"{output_dir}/umap_clusters_g_{gamma}_a_{alpha}_N_{N}_L_{L}_mu_{mu}{gen_suffix}.png"
     plt.savefig(output_file, dpi=300, bbox_inches='tight')
     print(f"Visualization saved to: {output_file}")
     plt.show()

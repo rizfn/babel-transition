@@ -3,10 +3,10 @@ import matplotlib.pyplot as plt
 
 def main():
     gamma = -4
-    alpha = 1
+    alpha = 10
     N = 1000
     L = 16
-    mu = 0.01
+    mu = 0.001
     generation, max_fitness, avg_fitness = np.loadtxt(f"src/geneticSimilaritySimplicity/outputs/fitness/g_{gamma}_a_{alpha}_N_{N}_L_{L}_mu_{mu}.tsv", delimiter='\t', unpack=True, skiprows=1)
 
     plt.plot(generation, max_fitness, label='Max Fitness')
