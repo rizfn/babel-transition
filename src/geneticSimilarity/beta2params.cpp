@@ -28,12 +28,13 @@ std::random_device rd;
 std::mt19937 gen(rd());
 
 // Default parameters
-constexpr double DEFAULT_GAMMA = 100;
+constexpr double DEFAULT_GAMMA = 0.0;
+constexpr int DEFAULT_ALPHA = 1000;
 constexpr int DEFAULT_N = 1000;
 constexpr int DEFAULT_L = 16;
 constexpr int DEFAULT_N_ROUNDS = 500;
 constexpr double DEFAULT_MU = 0.01;
-constexpr double DEFAULT_BETA = 0.01;
+constexpr double DEFAULT_BETA = 0.001;
 constexpr int DEFAULT_GENERATIONS = 1000;
 constexpr int DEFAULT_MAX_DEPTH = 5;
 constexpr int LANGUAGE_LAST_GENS_TO_RECORD = 100;
@@ -153,7 +154,7 @@ Language mutate(const Language &lang, double mu)
 }
 
 // Main evolution function
-void evolveLanguages(double gamma, int N, int L, int N_rounds, double mu,
+void evolveLanguages(double gamma, double alpha, int N, int L, int N_rounds, double mu,
                      double beta, int generations, int max_depth,
                      const std::string &fitness_file, const std::string &languages_file)
 {
@@ -230,7 +231,7 @@ void evolveLanguages(double gamma, int N, int L, int N_rounds, double mu,
                 double genetic_bonus = 0.0;
                 if (genetic_dist > 0)
                 {
-                    genetic_bonus = (1.0 / genetic_dist) * easeOfCommunication;
+                    genetic_bonus = alpha * (1.0 / genetic_dist) * easeOfCommunication;
                 }
 
                 // Calculate fitness (no sumBits term)
@@ -300,21 +301,11 @@ void evolveLanguages(double gamma, int N, int L, int N_rounds, double mu,
         std::vector<Agent> next_gen;
         next_gen.reserve(N);
 
-        // Calculate mean and standard deviation of fitness
-        double mean_fitness = avg_fitness;
-        double sq_sum = 0.0;
-        for (const auto &agent : population)
-        {
-            sq_sum += (agent.fitness - mean_fitness) * (agent.fitness - mean_fitness);
-        }
-        double std_fitness = std::sqrt(sq_sum / N);
-
-        // Calculate selection weights based on standardized fitness
+        // Calculate selection weights based on fitness
         std::vector<double> weights(N);
         for (int i = 0; i < N; ++i)
         {
-            double norm_fit = (std_fitness > 0) ? (population[i].fitness - mean_fitness) / std_fitness : 0.0;
-            weights[i] = exp(beta * norm_fit);
+            weights[i] = exp(beta * population[i].fitness);
         }
 
         // Create discrete distribution based on weights
@@ -351,15 +342,17 @@ void evolveLanguages(double gamma, int N, int L, int N_rounds, double mu,
     langs_out.close();
 }
 
+
 int main(int argc, char *argv[])
 {
     // Default parameters
     double gamma = DEFAULT_GAMMA;
+    double alpha = DEFAULT_ALPHA; // Add alpha
     int N = DEFAULT_N;
     int L = DEFAULT_L;
     int N_rounds = DEFAULT_N_ROUNDS;
     double mu = DEFAULT_MU;
-    double beta = DEFAULT_BETA; // Changed from children_per_success to beta
+    double beta = DEFAULT_BETA;
     int generations = DEFAULT_GENERATIONS;
     int max_depth = DEFAULT_MAX_DEPTH;
 
@@ -367,35 +360,37 @@ int main(int argc, char *argv[])
     if (argc > 1)
         gamma = std::stod(argv[1]);
     if (argc > 2)
-        N = std::stoi(argv[2]);
+        alpha = std::stod(argv[2]); // Parse alpha as second argument
     if (argc > 3)
-        L = std::stoi(argv[3]);
+        N = std::stoi(argv[3]);
     if (argc > 4)
-        N_rounds = std::stoi(argv[4]);
+        L = std::stoi(argv[4]);
     if (argc > 5)
-        mu = std::stod(argv[5]);
+        N_rounds = std::stoi(argv[5]);
     if (argc > 6)
-        beta = std::stod(argv[6]); // Changed from children_per_success to beta
+        mu = std::stod(argv[6]);
     if (argc > 7)
-        generations = std::stoi(argv[7]);
+        beta = std::stod(argv[7]);
     if (argc > 8)
-        max_depth = std::stoi(argv[8]);
+        generations = std::stoi(argv[8]);
+    if (argc > 9)
+        max_depth = std::stoi(argv[9]);
 
     std::string exeDir = std::filesystem::path(argv[0]).parent_path().string();
 
     // Generate output filenames with parameters
     std::ostringstream fitness_stream;
-    fitness_stream << exeDir << "/outputs/beta/fitness/g_" << gamma
+    fitness_stream << exeDir << "/outputs/beta/fitness/g_" << gamma << "_a_" << alpha
                    << "_N_" << N << "_L_" << L << "_mu_" << mu << ".tsv";
     std::string fitness_file = fitness_stream.str();
 
     std::ostringstream langs_stream;
-    langs_stream << exeDir << "/outputs/beta/languages/g_" << gamma
+    langs_stream << exeDir << "/outputs/beta/languages/g_" << gamma << "_a_" << alpha 
                  << "_N_" << N << "_L_" << L << "_mu_" << mu << ".tsv";
     std::string languages_file = langs_stream.str();
 
     // Run evolution with optimized genetic tracking
-    evolveLanguages(gamma, N, L, N_rounds, mu, beta, generations, max_depth,
+    evolveLanguages(gamma, alpha, N, L, N_rounds, mu, beta, generations, max_depth,
                     fitness_file, languages_file);
 
     return 0;

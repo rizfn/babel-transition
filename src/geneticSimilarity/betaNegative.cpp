@@ -33,7 +33,7 @@ constexpr int DEFAULT_N = 1000;
 constexpr int DEFAULT_L = 16;
 constexpr int DEFAULT_N_ROUNDS = 500;
 constexpr double DEFAULT_MU = 0.01;
-constexpr double DEFAULT_BETA = 0.01;
+constexpr double DEFAULT_BETA = 0.001;
 constexpr int DEFAULT_GENERATIONS = 1000;
 constexpr int DEFAULT_MAX_DEPTH = 5;
 constexpr int LANGUAGE_LAST_GENS_TO_RECORD = 100;
@@ -166,8 +166,7 @@ void evolveLanguages(double gamma, int N, int L, int N_rounds, double mu,
     for (int i = 0; i < N; ++i)
     {
         population.emplace_back(L, -1, 0);
-        // First generation gets unique genetic codes in first position only
-        population[i].genetic_code[0] = i; // Use agent index as first segment ID
+        population[i].genetic_code[0] = i;
     }
 
     // Open files
@@ -190,16 +189,14 @@ void evolveLanguages(double gamma, int N, int L, int N_rounds, double mu,
         // Run N_rounds of fitness evaluation
         for (int round = 0; round < N_rounds; ++round)
         {
-            // Shuffle indices for random pairing
             std::vector<int> indices(N);
-            std::iota(indices.begin(), indices.end(), 0); // Fill with 0, 1, 2, ...
+            std::iota(indices.begin(), indices.end(), 0);
             std::shuffle(indices.begin(), indices.end(), gen);
 
-            // Pair agents and compute fitness
             for (int i = 0; i < N; i += 2)
             {
                 if (i + 1 >= N)
-                    break; // Skip odd agent if N is odd
+                    break;
 
                 int idx_a = indices[i];
                 int idx_b = indices[i + 1];
@@ -207,35 +204,12 @@ void evolveLanguages(double gamma, int N, int L, int N_rounds, double mu,
                 Agent &a = population[idx_a];
                 Agent &b = population[idx_b];
 
-                // Calculate genetic distance using optimized approach
-                int genetic_dist = genetic_tracker.geneticDistance(a.genetic_code, b.genetic_code);
+                int d_genetic = genetic_tracker.geneticDistance(a.genetic_code, b.genetic_code);
+                int d_hamming = hamming(a.language, b.language);
 
-                // Calculate ease of communication
-                int ease = 0;
-                for (int k = 0; k < L; ++k)
-                {
-                    if (a.language[k] == 1 && b.language[k] == 1)
-                    {
-                        ease += 1;
-                    }
-                    else if ((a.language[k] == 1 && b.language[k] == 0) || (a.language[k] == 0 && b.language[k] == 1))
-                    {
-                        ease -= 1;
-                    }
-                    // else both 0: ignore
-                }
-                double easeOfCommunication = static_cast<double>(ease) / L;
-
-                // Calculate genetic bonus
-                double genetic_bonus = 0.0;
-                if (genetic_dist > 0)
-                {
-                    genetic_bonus = (1.0 / genetic_dist) * easeOfCommunication;
-                }
-
-                // Calculate fitness (no sumBits term)
-                double fit_a = -gamma * hamming(a.language, b.language) / L + genetic_bonus;
-                double fit_b = -gamma * hamming(b.language, a.language) / L + genetic_bonus;
+                double fit_a, fit_b;
+                fit_a = gamma * (1.0 - static_cast<double>(d_hamming) / L) / d_genetic;
+                fit_b = gamma * (1.0 - static_cast<double>(d_hamming) / L) / d_genetic;
 
                 a.fitnesses.push_back(fit_a);
                 b.fitnesses.push_back(fit_b);
@@ -300,21 +274,11 @@ void evolveLanguages(double gamma, int N, int L, int N_rounds, double mu,
         std::vector<Agent> next_gen;
         next_gen.reserve(N);
 
-        // Calculate mean and standard deviation of fitness
-        double mean_fitness = avg_fitness;
-        double sq_sum = 0.0;
-        for (const auto &agent : population)
-        {
-            sq_sum += (agent.fitness - mean_fitness) * (agent.fitness - mean_fitness);
-        }
-        double std_fitness = std::sqrt(sq_sum / N);
-
-        // Calculate selection weights based on standardized fitness
+        // Calculate selection weights based on fitness
         std::vector<double> weights(N);
         for (int i = 0; i < N; ++i)
         {
-            double norm_fit = (std_fitness > 0) ? (population[i].fitness - mean_fitness) / std_fitness : 0.0;
-            weights[i] = exp(beta * norm_fit);
+            weights[i] = exp(beta * population[i].fitness);
         }
 
         // Create discrete distribution based on weights
@@ -353,13 +317,13 @@ void evolveLanguages(double gamma, int N, int L, int N_rounds, double mu,
 
 int main(int argc, char *argv[])
 {
-    // Default parameters
+    // Only gamma is a parameter now
     double gamma = DEFAULT_GAMMA;
     int N = DEFAULT_N;
     int L = DEFAULT_L;
     int N_rounds = DEFAULT_N_ROUNDS;
     double mu = DEFAULT_MU;
-    double beta = DEFAULT_BETA; // Changed from children_per_success to beta
+    double beta = DEFAULT_BETA;
     int generations = DEFAULT_GENERATIONS;
     int max_depth = DEFAULT_MAX_DEPTH;
 
@@ -375,7 +339,7 @@ int main(int argc, char *argv[])
     if (argc > 5)
         mu = std::stod(argv[5]);
     if (argc > 6)
-        beta = std::stod(argv[6]); // Changed from children_per_success to beta
+        beta = std::stod(argv[6]);
     if (argc > 7)
         generations = std::stoi(argv[7]);
     if (argc > 8)
@@ -383,18 +347,18 @@ int main(int argc, char *argv[])
 
     std::string exeDir = std::filesystem::path(argv[0]).parent_path().string();
 
-    // Generate output filenames with parameters
+    // Output filenames
     std::ostringstream fitness_stream;
-    fitness_stream << exeDir << "/outputs/beta/fitness/g_" << gamma
-                   << "_N_" << N << "_L_" << L << "_mu_" << mu << ".tsv";
+    fitness_stream << exeDir << "/outputs/betaNegative/fitness/g_" << gamma
+                   << "_N_" << N << "_L_" << L << "_mu_" << mu << "_gdmax_" << max_depth << ".tsv";
     std::string fitness_file = fitness_stream.str();
 
     std::ostringstream langs_stream;
-    langs_stream << exeDir << "/outputs/beta/languages/g_" << gamma
-                 << "_N_" << N << "_L_" << L << "_mu_" << mu << ".tsv";
+    langs_stream << exeDir << "/outputs/betaNegative/languages/g_" << gamma
+                 << "_N_" << N << "_L_" << L << "_mu_" << mu << "_gdmax_" << max_depth << ".tsv";
     std::string languages_file = langs_stream.str();
 
-    // Run evolution with optimized genetic tracking
+    // Run evolution
     evolveLanguages(gamma, N, L, N_rounds, mu, beta, generations, max_depth,
                     fitness_file, languages_file);
 
