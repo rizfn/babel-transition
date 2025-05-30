@@ -28,14 +28,15 @@ std::random_device rd;
 std::mt19937 gen(rd());
 
 // Default parameters
-constexpr double DEFAULT_GAMMA = 100;
+constexpr double DEFAULT_GAMMA = 5;
+constexpr double DEFAULT_ALPHA = 100;
+constexpr int DEFAULT_MAX_DEPTH = 20;
 constexpr int DEFAULT_N = 1000;
 constexpr int DEFAULT_L = 16;
 constexpr int DEFAULT_N_ROUNDS = 500;
 constexpr double DEFAULT_MU = 0.01;
 constexpr double DEFAULT_BETA = 0.1;
 constexpr int DEFAULT_GENERATIONS = 1000;
-constexpr int DEFAULT_MAX_DEPTH = 1000;
 constexpr int LANGUAGE_LAST_GENS_TO_RECORD = 100;
 constexpr int LANGUAGE_RECORDING_SKIP = 10;
 
@@ -153,8 +154,8 @@ Language mutate(const Language &lang, double mu)
 }
 
 // Main evolution function
-void evolveLanguages(double gamma, int N, int L, int N_rounds, double mu,
-                     double beta, int generations, int max_depth,
+void evolveLanguages(double gamma, double alpha, int max_depth, int N, int L, int N_rounds, double mu,
+                     double beta, int generations,
                      const std::string &fitness_file, const std::string &languages_file)
 {
     // Initialize genetic tracker
@@ -208,8 +209,15 @@ void evolveLanguages(double gamma, int N, int L, int N_rounds, double mu,
                 int d_hamming = hamming(a.language, b.language);
 
                 double fit_a, fit_b;
-                fit_a = gamma * (1.0 - static_cast<double>(d_hamming) / L) / d_genetic;
-                fit_b = gamma * (1.0 - static_cast<double>(d_hamming) / L) / d_genetic;
+                if (d_genetic > 0) {
+                    // Related: reward for speaking the same language
+                    fit_a = alpha * (1.0 - static_cast<double>(d_hamming) / L) / d_genetic;
+                    fit_b = alpha * (1.0 - static_cast<double>(d_hamming) / L) / d_genetic;
+                } else {
+                    // Unrelated: reward for speaking a different language
+                    fit_a = gamma * static_cast<double>(d_hamming) / L;
+                    fit_b = gamma * static_cast<double>(d_hamming) / L;
+                }
 
                 a.fitnesses.push_back(fit_a);
                 b.fitnesses.push_back(fit_b);
@@ -317,49 +325,54 @@ void evolveLanguages(double gamma, int N, int L, int N_rounds, double mu,
 
 int main(int argc, char *argv[])
 {
-    // Only gamma is a parameter now
+    // gamma, alpha, max_depth are the first three parameters
     double gamma = DEFAULT_GAMMA;
+    double alpha = DEFAULT_ALPHA;
+    int max_depth = DEFAULT_MAX_DEPTH;
     int N = DEFAULT_N;
     int L = DEFAULT_L;
     int N_rounds = DEFAULT_N_ROUNDS;
     double mu = DEFAULT_MU;
     double beta = DEFAULT_BETA;
     int generations = DEFAULT_GENERATIONS;
-    int max_depth = DEFAULT_MAX_DEPTH;
 
     // Parse command line args
     if (argc > 1)
         gamma = std::stod(argv[1]);
     if (argc > 2)
-        N = std::stoi(argv[2]);
+        alpha = std::stod(argv[2]);
     if (argc > 3)
-        L = std::stoi(argv[3]);
+        max_depth = std::stoi(argv[3]);
     if (argc > 4)
-        N_rounds = std::stoi(argv[4]);
+        N = std::stoi(argv[4]);
     if (argc > 5)
-        mu = std::stod(argv[5]);
+        L = std::stoi(argv[5]);
     if (argc > 6)
-        beta = std::stod(argv[6]);
+        N_rounds = std::stoi(argv[6]);
     if (argc > 7)
-        generations = std::stoi(argv[7]);
+        mu = std::stod(argv[7]);
     if (argc > 8)
-        max_depth = std::stoi(argv[8]);
+        beta = std::stod(argv[8]);
+    if (argc > 9)
+        generations = std::stoi(argv[9]);
 
     std::string exeDir = std::filesystem::path(argv[0]).parent_path().string();
 
     // Output filenames
     std::ostringstream fitness_stream;
-    fitness_stream << exeDir << "/outputs/betaNegative/fitness/g_" << gamma
-                   << "_N_" << N << "_L_" << L << "_mu_" << mu << "_gdmax_" << max_depth << ".tsv";
+    fitness_stream << exeDir << "/outputs/beta/fitness/g_" << gamma
+                   << "_a_" << alpha << "_gdmax_" << max_depth
+                   << "_N_" << N << "_L_" << L << "_mu_" << mu << ".tsv";
     std::string fitness_file = fitness_stream.str();
 
     std::ostringstream langs_stream;
-    langs_stream << exeDir << "/outputs/betaNegative/languages/g_" << gamma
-                 << "_N_" << N << "_L_" << L << "_mu_" << mu << "_gdmax_" << max_depth << ".tsv";
+    langs_stream << exeDir << "/outputs/beta/languages/g_" << gamma
+                 << "_a_" << alpha << "_gdmax_" << max_depth
+                 << "_N_" << N << "_L_" << L << "_mu_" << mu << ".tsv";
     std::string languages_file = langs_stream.str();
 
     // Run evolution
-    evolveLanguages(gamma, N, L, N_rounds, mu, beta, generations, max_depth,
+    evolveLanguages(gamma, alpha, max_depth, N, L, N_rounds, mu, beta, generations,
                     fitness_file, languages_file);
 
     return 0;

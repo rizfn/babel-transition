@@ -60,7 +60,8 @@ def betaNegative():
     N = 1000
     L = 16
     mu = 0.01
-    generation, max_fitness, avg_fitness = np.loadtxt(f"src/geneticSimilarity/outputs/betaNegative/fitness/g_{gamma}_N_{N}_L_{L}_mu_{mu}.tsv", delimiter='\t', unpack=True, skiprows=1)
+    max_depth = 1000
+    generation, max_fitness, avg_fitness = np.loadtxt(f"src/geneticSimilarity/outputs/betaNegative/fitness/g_{gamma}_N_{N}_L_{L}_mu_{mu}_gdmax_{max_depth}.tsv", delimiter='\t', unpack=True, skiprows=1)
 
     plt.plot(generation, max_fitness, label='Max Fitness')
     plt.plot(generation, avg_fitness, label='Avg Fitness')
@@ -69,7 +70,7 @@ def betaNegative():
     plt.title(f'($\gamma$={gamma}, N={N}, L={L}, $\mu$={mu})')
     plt.legend()
     plt.grid()
-    plt.savefig(f"src/geneticSimilarity/plots/fitness/betaNegative_timeseries_g_{gamma}_N_{N}_L_{L}_mu_{mu}.png", dpi=300)
+    plt.savefig(f"src/geneticSimilarity/plots/fitness/betaNegative_timeseries_g_{gamma}_gdmax_{max_depth}_N_{N}_L_{L}_mu_{mu}.png", dpi=300)
     plt.show()
 
 
