@@ -116,4 +116,4 @@ def umap_clusters_understandability_vs_hamming(gamma, alpha, N, L, mu):
     plt.show()
 
 if __name__ == "__main__":
-    umap_clusters_understandability_vs_hamming(3, 1, 1000, 16, 0.01)
+    umap_clusters_understandability_vs_hamming(3, 1, 2000, 16, 0.01)

@@ -54,9 +54,9 @@ def extract_params_from_filename_top50(filename):
     else:
         return None, None, None, None, None
 
-def main_top50():
+def main_top50(N, L, mu):
     # Path to fitness files for top50 (adjust path as needed)
-    fitness_files_pattern = "src/understandabilityVsHamming/outputs/top50/fitness/g_*_a_*_N_*_L_*_mu_*.tsv"
+    fitness_files_pattern = f"src/understandabilityVsHamming/outputs/top50/fitness/g_*_a_*_N_{N}_L_{L}_mu_{mu}.tsv"
     fitness_files = glob.glob(fitness_files_pattern)
     if not fitness_files:
         print(f"No files found matching pattern: {fitness_files_pattern}")
@@ -130,4 +130,4 @@ def main_top50():
     plt.show()
 
 if __name__ == "__main__":
-    main_top50()
+    main_top50(1000, 16, 0.5)

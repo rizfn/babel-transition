@@ -103,9 +103,9 @@ def extract_params_from_filename_top50(filename):
     else:
         return None, None, None, None, None
 
-def main_top50():
+def main_top50(N, L, mu):
     # Path to language files for top50 (adjust path as needed)
-    languages_files_pattern = "src/understandabilityVsHamming/outputs/top50/languages/g_*_a_*_N_*_L_*_mu_*.tsv"
+    languages_files_pattern = f"src/understandabilityVsHamming/outputs/top50/languages/g_*_a_*_N_{N}_L_{L}_mu_{mu}.tsv"
     language_files = glob.glob(languages_files_pattern)
     if not language_files:
         print(f"No files found matching pattern: {languages_files_pattern}")
@@ -204,4 +204,4 @@ def main_top50():
 
 
 if __name__ == "__main__":
-    main_top50()
+    main_top50(1000, 16, 0.5)

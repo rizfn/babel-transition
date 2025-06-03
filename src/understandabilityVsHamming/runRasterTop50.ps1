@@ -1,12 +1,12 @@
 # Define the ranges for alpha and gamma parameters
-$alpha_values = -1, 0, 1, 2, 3, 4, 5, 6
-$gamma_values = -1, 0, 1, 2, 3, 4, 5, 6
+$alpha_values = -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10
+$gamma_values = -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10
 
 # Fixed parameters
 $N = 1000
 $L = 16
 $N_rounds = 500
-$mu = 0.01
+$mu = 0.5
 $generations = 1000
 
 # Path to the executable
