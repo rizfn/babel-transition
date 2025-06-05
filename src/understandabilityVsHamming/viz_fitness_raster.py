@@ -130,4 +130,4 @@ def main_top50(N, L, mu):
     plt.show()
 
 if __name__ == "__main__":
-    main_top50(1000, 16, 0.5)
+    main_top50(1000, 16, 0.05)

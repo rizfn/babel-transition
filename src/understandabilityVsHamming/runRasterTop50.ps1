@@ -6,7 +6,7 @@ $gamma_values = -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10
 $N = 1000
 $L = 16
 $N_rounds = 500
-$mu = 0.5
+$mu = 0.05
 $generations = 1000
 
 # Path to the executable
