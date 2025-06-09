@@ -107,4 +107,4 @@ def plot_lattice_umap_clusters(L, g, a, r, B, mu, K):
     plt.show()
 
 if __name__ == "__main__":
-    plot_lattice_umap_clusters(100, 1, 1, 0.5, 16, 0.01, 3)
+    plot_lattice_umap_clusters(100, 2, 1, 2, 32, 0.01, 3)

@@ -25,12 +25,12 @@ static auto _ = []()
 std::random_device rd;
 std::mt19937 gen(rd());
 
-constexpr int L = 100; // lattice size
-constexpr int B = 16; // bitstring length
+constexpr int L = 128; // lattice size
+constexpr int B = 32; // bitstring length
 constexpr int N_STEPS = 1000;
 constexpr double DEFAULT_GAMMA = 2.0;
 constexpr double DEFAULT_ALPHA = 1.0;
-constexpr double DEFAULT_GLOBAL_INTERACTION_RATIO = 2;  // multiplies the number of local interactions (4) by this
+constexpr double DEFAULT_GLOBAL_INTERACTION_RATIO = 0.5;  // multiplies the number of local interactions (4) by this
 constexpr int KILL_RADIUS = 3;
 constexpr double DEFAULT_MU = 0.01;
 
