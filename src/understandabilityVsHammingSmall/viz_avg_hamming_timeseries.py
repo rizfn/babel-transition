@@ -4,11 +4,11 @@ import matplotlib.pyplot as plt
 import os
 from sklearn.metrics import pairwise_distances
 
-def compute_avg_hamming_per_generation(gamma, alpha, N, L, mu):
+def compute_avg_hamming_per_generation(gamma, alpha, N, B, mu):
     """Compute average hamming distance for each generation."""
     # Load language data
-    base_dir = "src/understandabilityVsHammingSmall/outputs/top50/languages"
-    languages_file = f"{base_dir}/g_{gamma}_a_{alpha}_N_{N}_L_{L}_mu_{mu}.tsv"
+    base_dir = f"src/understandabilityVsHammingSmall/outputs/top50/B_{B}/languages"
+    languages_file = f"{base_dir}/g_{gamma}_a_{alpha}_N_{N}_B_{B}_mu_{mu}.tsv"
 
     if not os.path.exists(languages_file):
         print(f"Error: File {languages_file} not found.")
@@ -29,7 +29,7 @@ def compute_avg_hamming_per_generation(gamma, alpha, N, L, mu):
         languages = np.array([[int(bit) for bit in str(lang_str)] for lang_str in df_gen['language']])
         
         # Compute Hamming distance matrix
-        hamming_matrix = pairwise_distances(languages, metric='hamming') * L
+        hamming_matrix = pairwise_distances(languages, metric='hamming') * B
         
         # Get average pairwise distance (excluding diagonal)
         upper_tri_indices = np.triu_indices_from(hamming_matrix, k=1)
@@ -42,8 +42,8 @@ def compute_avg_hamming_per_generation(gamma, alpha, N, L, mu):
 def plot_hamming_timeseries(files_to_plot):
     """Plot average hamming distance timeseries for multiple files."""    
     
-    for idx, (gamma, alpha, N, L, mu) in enumerate(files_to_plot):
-        generations, avg_hamming_per_gen = compute_avg_hamming_per_generation(gamma, alpha, N, L, mu)
+    for idx, (gamma, alpha, N, B, mu) in enumerate(files_to_plot):
+        generations, avg_hamming_per_gen = compute_avg_hamming_per_generation(gamma, alpha, N, B, mu)
         
         if generations is None or avg_hamming_per_gen is None:
             continue
@@ -52,14 +52,14 @@ def plot_hamming_timeseries(files_to_plot):
     
     plt.xlabel('Generation')
     plt.ylabel('Average Hamming Distance')
-    plt.title(f'Average Hamming Distance Over Time\n(N={N}, L={L}, μ={mu})')
+    plt.title(f'Average Hamming Distance Over Time\n(N={N}, B={B}, μ={mu})')
     plt.legend()
     plt.grid(True, alpha=0.3)
     plt.tight_layout()
     
     output_dir = "src/understandabilityVsHammingSmall/plots/avgHammingTimeseries"
     os.makedirs(output_dir, exist_ok=True)
-    output_file = f"{output_dir}/avg_hamming_timeseries_N_{N}_L_{L}_mu_{mu}.png"
+    output_file = f"{output_dir}/avg_hamming_timeseries_N_{N}_B_{B}_mu_{mu}.png"
     plt.savefig(output_file, dpi=300, bbox_inches='tight')
     print(f"Timeseries plot saved to: {output_file}")
 

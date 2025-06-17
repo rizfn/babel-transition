@@ -5,3 +5,4 @@
 babel-env
 *outputs/
 *.exe
+**/frames

@@ -11,10 +11,10 @@ def plot_multiple_files(files_to_plot, hamming_threshold=1):
     if len(files_to_plot) == 1:
         axes = [axes]  # Make it iterable for single subplot
     
-    for idx, (gamma, alpha, N, L, mu) in enumerate(files_to_plot):
+    for idx, (gamma, alpha, N, B, mu) in enumerate(files_to_plot):
         # Load language data
-        base_dir = "src/understandabilityVsHammingSmall/outputs/top50/languages"
-        languages_file = f"{base_dir}/g_{gamma}_a_{alpha}_N_{N}_L_{L}_mu_{mu}.tsv"
+        base_dir = f"src/understandabilityVsHammingSmall/outputs/top50/B_{B}/languages"
+        languages_file = f"{base_dir}/g_{gamma}_a_{alpha}_N_{N}_B_{B}_mu_{mu}.tsv"
 
         if not os.path.exists(languages_file):
             print(f"Error: File {languages_file} not found.")
@@ -36,7 +36,7 @@ def plot_multiple_files(files_to_plot, hamming_threshold=1):
             languages = np.array([[int(bit) for bit in str(lang_str)] for lang_str in df_gen['language']])
             
             # Compute Hamming distance matrix
-            hamming_matrix = pairwise_distances(languages, metric='hamming') * L
+            hamming_matrix = pairwise_distances(languages, metric='hamming') * B
             
             # Collect all pairwise distances (excluding diagonal)
             upper_tri_indices = np.triu_indices_from(hamming_matrix, k=1)
@@ -59,15 +59,14 @@ def plot_multiple_files(files_to_plot, hamming_threshold=1):
         axes[idx].set_title(f'γ={gamma}, α={alpha}\n(Avg Hamming: {avg_hamming:.2f})')
         axes[idx].grid(True, alpha=0.3)
     
-    plt.suptitle(f'Distribution of Communicable Fraction\n(N={N}, L={L}, μ={mu}, threshold={hamming_threshold})')
+    plt.suptitle(f'Distribution of Communicable Fraction\n(N={N}, B={B}, μ={mu}, threshold={hamming_threshold})')
     plt.tight_layout()
 
     output_dir = "src/understandabilityVsHammingSmall/plots/numberCommunicable"
     os.makedirs(output_dir, exist_ok=True)
-    output_file = f"{output_dir}/communicable_hist_comparison_all_gens_thresh_{hamming_threshold}.png"
+    output_file = f"{output_dir}/communicable_hist_comparison_all_gens_B_{B}_thresh_{hamming_threshold}.png"
     plt.savefig(output_file, dpi=300, bbox_inches='tight')
     print(f"Comparison plot saved to: {output_file}")
-    plt.show()
 
 if __name__ == "__main__":
     # Define files to plot in one place

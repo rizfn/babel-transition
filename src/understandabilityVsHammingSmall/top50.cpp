@@ -29,7 +29,7 @@ std::mt19937 gen(rd());
 constexpr double DEFAULT_GAMMA = 0;
 constexpr double DEFAULT_ALPHA = 1;
 constexpr int DEFAULT_N = 1000;
-constexpr int DEFAULT_L = 16;
+constexpr int DEFAULT_B = 16;
 constexpr int DEFAULT_N_ROUNDS = 500;
 constexpr double DEFAULT_MU = 0.01;
 constexpr int DEFAULT_GENERATIONS = 1000;
@@ -46,8 +46,8 @@ struct Agent {
     std::vector<double> fitnesses;
     int birth_generation;
 
-    Agent(int L, int gen = 0)
-        : language(L, 0), fitness(0.0), birth_generation(gen) {}
+    Agent(int B, int gen = 0)
+        : language(B, 0), fitness(0.0), birth_generation(gen) {}
 };
 
 // Function to compute Hamming distance between two languages
@@ -85,7 +85,7 @@ Language mutate(const Language& lang, double mu) {
 }
 
 // Main evolution function
-void evolveLanguages(double gamma, double alpha, int N, int L, int N_rounds, double mu,
+void evolveLanguages(double gamma, double alpha, int N, int B, int N_rounds, double mu,
                      int generations,
                      const std::string& fitness_file, const std::string& languages_file)
 {
@@ -99,7 +99,7 @@ void evolveLanguages(double gamma, double alpha, int N, int L, int N_rounds, dou
     std::vector<Agent> population;
     population.reserve(N);
     for (int i = 0; i < N; ++i) {
-        population.emplace_back(L, 0);
+        population.emplace_back(B, 0);
     }
 
     // Open files
@@ -132,8 +132,8 @@ void evolveLanguages(double gamma, double alpha, int N, int L, int N_rounds, dou
                 Agent& a = population[idx_a];
                 Agent& b = population[idx_b];
 
-                double fit = alpha * (static_cast<double>(communicability(a.language, b.language)) / L)
-                            + gamma * (static_cast<double>(hamming(a.language, b.language)) / L);
+                double fit = alpha * (static_cast<double>(communicability(a.language, b.language)) / B)
+                            + gamma * (static_cast<double>(hamming(a.language, b.language)) / B);
 
                 a.fitnesses.push_back(fit);
                 b.fitnesses.push_back(fit);
@@ -174,7 +174,7 @@ void evolveLanguages(double gamma, double alpha, int N, int L, int N_rounds, dou
         // Each successful agent produces two children
         for (int i = 0; i < n_success; ++i) {
             for (int c = 0; c < 2; ++c) {
-                Agent child(L, generation + 1);
+                Agent child(B, generation + 1);
                 child.language = mutate(population[i].language, mu);
                 next_gen.push_back(std::move(child));
             }
@@ -220,7 +220,7 @@ int main(int argc, char* argv[]) {
     double gamma = DEFAULT_GAMMA;
     double alpha = DEFAULT_ALPHA;
     int N = DEFAULT_N;
-    int L = DEFAULT_L;
+    int B = DEFAULT_B;
     int N_rounds = DEFAULT_N_ROUNDS;
     double mu = DEFAULT_MU;
     int generations = DEFAULT_GENERATIONS;
@@ -229,28 +229,32 @@ int main(int argc, char* argv[]) {
     if (argc > 1) gamma = std::stod(argv[1]);
     if (argc > 2) alpha = std::stod(argv[2]);
     if (argc > 3) N = std::stoi(argv[3]);
-    if (argc > 4) L = std::stoi(argv[4]);
+    if (argc > 4) B = std::stoi(argv[4]);
     if (argc > 5) N_rounds = std::stoi(argv[5]);
     if (argc > 6) mu = std::stod(argv[6]);
     if (argc > 7) generations = std::stoi(argv[7]);
 
     std::string exeDir = std::filesystem::path(argv[0]).parent_path().string();
 
-    // Output filenames
+    // Output filenames with new directory structure
     std::ostringstream fitness_stream;
-    fitness_stream << exeDir << "/outputs/top50/fitness/g_" << gamma
+    fitness_stream << exeDir << "/outputs/top50/B_" << B << "/fitness/g_" << gamma
                    << "_a_" << alpha << "_N_" << N
-                   << "_L_" << L << "_mu_" << mu << ".tsv";
+                   << "_B_" << B << "_mu_" << mu << ".tsv";
     std::string fitness_file = fitness_stream.str();
 
     std::ostringstream langs_stream;
-    langs_stream << exeDir << "/outputs/top50/languages/g_" << gamma
+    langs_stream << exeDir << "/outputs/top50/B_" << B << "/languages/g_" << gamma
                  << "_a_" << alpha << "_N_" << N
-                 << "_L_" << L << "_mu_" << mu << ".tsv";
+                 << "_B_" << B << "_mu_" << mu << ".tsv";
     std::string languages_file = langs_stream.str();
 
+    // Create directories if they don't exist
+    std::filesystem::create_directories(std::filesystem::path(fitness_file).parent_path());
+    std::filesystem::create_directories(std::filesystem::path(languages_file).parent_path());
+
     // Run evolution
-    evolveLanguages(gamma, alpha, N, L, N_rounds, mu, generations,
+    evolveLanguages(gamma, alpha, N, B, N_rounds, mu, generations,
                     fitness_file, languages_file);
 
     return 0;

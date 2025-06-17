@@ -10,7 +10,7 @@ def bitstring_to_color(bits):
     return (r, g, b)
 
     
-def plot_languages(languages, step, outname, L):
+def plot_languages(languages, step, outname, B):
     """Plot languages as a heatmap with unique language clusters."""
     # Convert language strings to binary arrays
     langs_array = np.array([[int(bit) for bit in lang] for lang in languages])
@@ -30,7 +30,7 @@ def plot_languages(languages, step, outname, L):
     sorted_indices = np.argsort(labels)
     sorted_languages = langs_array[sorted_indices]
     sorted_labels = labels[sorted_indices]
-    language_colors = np.ones((len(sorted_languages), L, 3))
+    language_colors = np.ones((len(sorted_languages), B, 3))
     
     for i, (language, label) in enumerate(zip(sorted_languages, sorted_labels)):
         color = color_mapping[label]
@@ -39,7 +39,7 @@ def plot_languages(languages, step, outname, L):
                 language_colors[i, j] = color
     
     ax.imshow(language_colors, aspect='auto', interpolation='none',
-              extent=[-0.5, L-0.5, len(sorted_languages)-0.5, -0.5])
+              extent=[-0.5, B-0.5, len(sorted_languages)-0.5, -0.5])
     ax.set_title(f'Languages Heatmap (Step {step})')
     ax.set_xlabel('Bit Position')
     ax.set_ylabel('Language ID (sorted by language type)')
@@ -48,9 +48,9 @@ def plot_languages(languages, step, outname, L):
     plt.savefig(outname)
     plt.close()
 
-def main(g, a, N, L, mu, step):
-    infile = f"src/understandabilityVsHammingSmall/outputs/top50/languages/g_{g}_a_{a}_N_{N}_L_{L}_mu_{mu}.tsv"
-    outname = f"src/understandabilityVsHammingSmall/plots/languages/g_{g}_a_{a}_N_{N}_L_{L}_mu_{mu}.png"
+def main(g, a, N, B, mu, step):
+    infile = f"src/understandabilityVsHammingSmall/outputs/top50/B_{B}/languages/g_{g}_a_{a}_N_{N}_B_{B}_mu_{mu}.tsv"
+    outname = f"src/understandabilityVsHammingSmall/plots/languages/g_{g}_a_{a}_N_{N}_B_{B}_mu_{mu}.png"
 
     df = pd.read_csv(infile, sep="\t", dtype={'language': str, 'generation': int})
     if step is None:
@@ -64,16 +64,16 @@ def main(g, a, N, L, mu, step):
     langs = df['language'].tolist()  # Convert to list of strings
     langs = np.array(langs)
 
-    plot_languages(langs, step, outname, L)
+    plot_languages(langs, step, outname, B)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--g", type=float, default=-1)
     parser.add_argument("--a", type=float, default=1)
     parser.add_argument("--N", type=int, default=1000)
-    parser.add_argument("--L", type=int, default=4)
+    parser.add_argument("--B", type=int, default=4)
     parser.add_argument("--mu", type=float, default=0.01)
     parser.add_argument("--step", type=int, default=None, help="Which step to plot (default: last)")
     args = parser.parse_args()
 
-    main(args.g, args.a, args.N, args.L, args.mu, args.step)
+    main(args.g, args.a, args.N, args.B, args.mu, args.step)

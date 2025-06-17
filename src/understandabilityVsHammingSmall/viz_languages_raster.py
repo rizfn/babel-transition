@@ -6,7 +6,7 @@ import os
 import re
 from sklearn.metrics import pairwise_distances
 
-def count_surviving_languages(languages, L, N, threshold_scale=0.5):
+def count_surviving_languages(languages, B, N, threshold_scale=0.5):
     """Count number of surviving languages based on abundance threshold."""
     # Count occurrences of each unique language
     unique_langs, counts = np.unique(languages, return_counts=True)
@@ -14,7 +14,7 @@ def count_surviving_languages(languages, L, N, threshold_scale=0.5):
     lang_fractions = counts / N
     
     # Calculate threshold
-    max_possible_languages = 2**L
+    max_possible_languages = 2**B
     threshold = threshold_scale / (max_possible_languages)
     
     # Count languages above threshold
@@ -22,7 +22,7 @@ def count_surviving_languages(languages, L, N, threshold_scale=0.5):
     
     return surviving_count
 
-def compute_avg_hamming_distance(languages, L):
+def compute_avg_hamming_distance(languages, B):
     """Compute average pairwise Hamming distance between languages."""
     if len(languages) < 2:
         return 0.0
@@ -36,7 +36,7 @@ def compute_avg_hamming_distance(languages, L):
     lang_arrays = np.array(lang_arrays)
     
     # Compute pairwise Hamming distances
-    hamming_matrix = pairwise_distances(lang_arrays, metric='hamming') * L
+    hamming_matrix = pairwise_distances(lang_arrays, metric='hamming') * B
     
     # Get average (excluding diagonal)
     n = len(languages)
@@ -45,17 +45,17 @@ def compute_avg_hamming_distance(languages, L):
     return avg_hamming
 
 def extract_params_from_filename(filename):
-    """Extract parameters from filename like g_-1.0_a_1.0_N_1000_L_4_mu_0.01.tsv"""
-    pattern = r'g_([^_]+)_a_([^_]+)_N_([^_]+)_L_([^_]+)_mu_([^_]+)\.tsv'
+    """Extract parameters from filename like g_-1.0_a_1.0_N_1000_B_4_mu_0.01.tsv"""
+    pattern = r'g_([^_]+)_a_([^_]+)_N_([^_]+)_B_([^_]+)_mu_([^_]+)\.tsv'
     match = re.match(pattern, filename)
     
     if match:
         g = float(match.group(1))
         a = float(match.group(2))
         N = int(match.group(3))
-        L = int(match.group(4))
+        B = int(match.group(4))
         mu = float(match.group(5))
-        return g, a, N, L, mu
+        return g, a, N, B, mu
     else:
         return None
 
@@ -69,7 +69,7 @@ def process_all_files_timesteps(input_dir, threshold_scale=0.5):
             if params is None:
                 continue
                 
-            g, a, N, L, mu = params
+            g, a, N, B, mu = params
             filepath = os.path.join(input_dir, filename)
             
             try:
@@ -83,8 +83,8 @@ def process_all_files_timesteps(input_dir, threshold_scale=0.5):
                         continue
                     
                     languages = df_step['language'].tolist()
-                    surviving_count = count_surviving_languages(languages, L, N, threshold_scale)
-                    avg_hamming = compute_avg_hamming_distance(languages, L)
+                    surviving_count = count_surviving_languages(languages, B, N, threshold_scale)
+                    avg_hamming = compute_avg_hamming_distance(languages, B)
                     
                     if generation not in all_data:
                         all_data[generation] = []
@@ -93,7 +93,7 @@ def process_all_files_timesteps(input_dir, threshold_scale=0.5):
                         'g': g,
                         'a': a,
                         'N': N,
-                        'L': L,
+                        'B': B,
                         'mu': mu,
                         'surviving_languages': surviving_count,
                         'avg_hamming': avg_hamming,
@@ -207,7 +207,7 @@ def compute_averages_across_frames(all_data):
     df = pd.DataFrame(all_results)
     
     # Group by parameter combinations and compute averages
-    grouped = df.groupby(['g', 'a', 'N', 'L', 'mu']).agg({
+    grouped = df.groupby(['g', 'a', 'N', 'B', 'mu']).agg({
         'surviving_languages': 'mean',
         'avg_hamming': 'mean'
     }).reset_index()
@@ -307,13 +307,13 @@ def plot_averages(average_results, output_path, threshold_scale):
 def main():
     parser = argparse.ArgumentParser(description='Create video frames and average plot of surviving languages heatmaps')
     parser.add_argument("--input_dir", type=str, 
-                       default="src/understandabilityVsHammingSmall/outputs/top50/languages/",
+                       default="src/understandabilityVsHammingSmall/outputs/top50/B_4/languages/",
                        help="Directory containing language .tsv files")
     parser.add_argument("--frames_output_dir", type=str, 
                        default="src/understandabilityVsHammingSmall/plots/languages/frames/",
                        help="Output directory for frames")
     parser.add_argument("--average_output", type=str, 
-                       default="src/understandabilityVsHammingSmall/plots/languages/average_heatmap.png",
+                       default="src/understandabilityVsHammingSmall/plots/languages/average_heatmap_B_4.png",
                        help="Output path for average heatmap")
     parser.add_argument("--threshold_scale", type=float, default=0.5,
                        help="Threshold scaling factor (default: 0.5)")

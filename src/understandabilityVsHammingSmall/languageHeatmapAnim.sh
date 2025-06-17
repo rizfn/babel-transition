@@ -3,12 +3,13 @@
 # ---- Define your parameters here ----
 framerate=10  # Frames per second for the animation
 frame_start_num=900
+B=4  # Bit string length parameter
 # -------------------------------------
 
 # Compose the directory name
 FRAMES_DIR="src/understandabilityVsHammingSmall/plots/languages/frames/"
 OUTDIR="src/understandabilityVsHammingSmall/plots/languages"
-OUTFILE="$OUTDIR/surviving_languages_heatmap.mp4"
+OUTFILE="$OUTDIR/surviving_languages_heatmap_B_${B}.mp4"
 
 if [ ! -d "$FRAMES_DIR" ]; then
     echo "Frames directory not found: $FRAMES_DIR"
