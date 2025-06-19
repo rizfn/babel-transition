@@ -112,11 +112,11 @@ def analyze_cluster_size_distribution(L, B, gamma, alpha, r, mu, K, bins=50, sta
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--L", type=int, default=256)
-    parser.add_argument("--B", type=int, default=4)
+    parser.add_argument("--B", type=int, default=16)
     parser.add_argument("--gamma", type=float, default=1)
     parser.add_argument("--alpha", type=float, default=1)
     parser.add_argument("--r", type=float, default=2)
-    parser.add_argument("--mu", type=float, default=0.01)
+    parser.add_argument("--mu", type=float, default=0.001)
     parser.add_argument("--K", type=int, default=3)
     parser.add_argument("--bins", type=int, default=50)
     parser.add_argument("--start_step", type=int, default=500, help="Step to start analysis from")

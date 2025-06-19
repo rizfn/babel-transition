@@ -26,7 +26,7 @@ std::random_device rd;
 std::mt19937 gen(rd());
 
 constexpr int L = 256; // lattice size
-constexpr int B = 2;   // bitstring length
+constexpr int B = 16;   // bitstring length
 constexpr int N_STEPS = 1000;
 constexpr double DEFAULT_GAMMA = 1;
 constexpr double DEFAULT_ALPHA = 1;
