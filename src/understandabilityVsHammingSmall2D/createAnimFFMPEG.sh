@@ -6,8 +6,8 @@ gamma=1
 alpha=1
 r=1
 B=16
-mu=0.01
-K=3
+mu=0.001
+K=1
 
 framerate=20  # Frames per second for the animation
 frame_start_num=0

@@ -30,9 +30,9 @@ constexpr int B = 16;   // bitstring length
 constexpr int N_STEPS = 1000;
 constexpr double DEFAULT_GAMMA = 1;
 constexpr double DEFAULT_ALPHA = 1;
-constexpr double DEFAULT_GLOBAL_INTERACTION_RATIO = 2; // multiplies the number of local interactions (4) by this
-constexpr int KILL_RADIUS = 3;
-constexpr double DEFAULT_MU = 0.01;
+constexpr double DEFAULT_GLOBAL_INTERACTION_RATIO = 1; // multiplies the number of local interactions (4) by this
+constexpr int KILL_RADIUS = 1;
+constexpr double DEFAULT_MU = 0.001;
 constexpr int STEPS_TO_RECORD = 1000;
 
 struct Agent
