@@ -26,12 +26,12 @@ std::random_device rd;
 std::mt19937 gen(rd());
 
 constexpr int L = 256; // lattice size
-constexpr int B = 16;   // bitstring length
+constexpr int B = 16;  // bitstring length
 constexpr int N_STEPS = 1000;
 constexpr double DEFAULT_GAMMA = 1;
 constexpr double DEFAULT_ALPHA = 1;
 constexpr double DEFAULT_GLOBAL_INTERACTION_RATIO = 1; // multiplies the number of local interactions (4) by this
-constexpr int KILL_RADIUS = 1;
+constexpr int KILL_RADIUS = 3;
 constexpr double DEFAULT_MU = 0.001;
 constexpr int STEPS_TO_RECORD = 1000;
 
@@ -96,7 +96,8 @@ std::tuple<int, int> find_weakest_in_radius(
     int cx, int cy, int radius)
 {
     double min_fitness = std::numeric_limits<double>::infinity();
-    std::vector<std::pair<int, int>> candidates;
+    std::vector<std::pair<int, int>> weakest_sites;
+    // First pass: find minimum fitness among non-immune
     for (int dx = -radius; dx <= radius; ++dx)
     {
         for (int dy = -radius; dy <= radius; ++dy)
@@ -105,25 +106,34 @@ std::tuple<int, int> find_weakest_in_radius(
                 continue;
             int nx = (cx + dx + L) % L;
             int ny = (cy + dy + L) % L;
-            if (lattice[nx][ny].immune)
-                continue;
-            if (lattice[nx][ny].fitness < min_fitness)
+            if (!lattice[nx][ny].immune)
             {
-                min_fitness = lattice[nx][ny].fitness;
-                candidates.clear();
-                candidates.emplace_back(nx, ny);
-            }
-            else if (lattice[nx][ny].fitness == min_fitness)
-            {
-                candidates.emplace_back(nx, ny);
+                if (lattice[nx][ny].fitness < min_fitness)
+                {
+                    min_fitness = lattice[nx][ny].fitness;
+                }
             }
         }
     }
-    // Randomly choose among weakest
-    if (!candidates.empty())
+    // Second pass: collect all non-immune sites with min_fitness
+    for (int dx = -radius; dx <= radius; ++dx)
     {
-        int idx = std::uniform_int_distribution<>(0, candidates.size() - 1)(gen);
-        return {candidates[idx].first, candidates[idx].second};
+        for (int dy = -radius; dy <= radius; ++dy)
+        {
+            if (std::abs(dx) + std::abs(dy) > radius)
+                continue;
+            int nx = (cx + dx + L) % L;
+            int ny = (cy + dy + L) % L;
+            if (!lattice[nx][ny].immune && lattice[nx][ny].fitness == min_fitness)
+            {
+                weakest_sites.emplace_back(nx, ny);
+            }
+        }
+    }
+    if (!weakest_sites.empty())
+    {
+        int idx = std::uniform_int_distribution<>(0, weakest_sites.size() - 1)(gen);
+        return {weakest_sites[idx].first, weakest_sites[idx].second};
     }
     // fallback: return self
     return {cx, cy};
@@ -204,7 +214,11 @@ void update(
         for (int j = 0; j < L; ++j)
             agent_list.emplace_back(lattice[i][j].fitness, i, j);
     std::shuffle(agent_list.begin(), agent_list.end(), gen);
-    std::sort(agent_list.rbegin(), agent_list.rend());
+    std::stable_sort(agent_list.begin(), agent_list.end(),
+                     [](auto &a, auto &b)
+                     {
+                         return std::get<0>(a) > std::get<0>(b); // compare only fitness
+                     });
 
     for (auto &row : lattice)
         for (auto &agent : row)
@@ -215,8 +229,6 @@ void update(
         if (lattice[i][j].immune)
             continue;
         auto [wi, wj] = find_weakest_in_radius(lattice, i, j, killRadius);
-        if (lattice[wi][wj].immune)
-            continue;
         // Perfect clone, no mutation
         lattice[wi][wj].language = lattice[i][j].language;
         lattice[i][j].immune = true;

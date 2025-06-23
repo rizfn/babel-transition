@@ -7,7 +7,7 @@ alpha=1
 r=1
 B=16
 mu=0.001
-K=1
+K=3
 
 framerate=20  # Frames per second for the animation
 frame_start_num=0

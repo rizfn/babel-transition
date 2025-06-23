@@ -150,6 +150,6 @@ if __name__ == "__main__":
     parser.add_argument("--alpha", type=float, default=1)
     parser.add_argument("--r", type=float, default=1)
     parser.add_argument("--mu", type=float, default=0.001)
-    parser.add_argument("--K", type=int, default=1)
+    parser.add_argument("--K", type=int, default=3)
     args = parser.parse_args()
     process_lattice_timeseries(args.L, args.B, args.gamma, args.alpha, args.r, args.mu, args.K)
