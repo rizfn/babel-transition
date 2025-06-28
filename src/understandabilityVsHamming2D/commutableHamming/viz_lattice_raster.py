@@ -129,23 +129,27 @@ def get_last_line_from_file(filename):
         last_line = b''.join(reversed(lines)).decode('utf-8').strip()
         return last_line if last_line else None
 
-def load_final_lattices():
-    """Load the final lattice from each file."""
-    pattern = os.path.join(os.path.dirname(__file__), "outputs/latticeTimeseries/rasterscan/L_*_g_*_a_*_B_*_mu_*_K_*.tsv")
+def load_final_lattices(L, B, mu, K):
+    """Load the final lattice from each file matching the specified parameters."""
+    pattern = os.path.join(os.path.dirname(__file__), f"outputs/latticeTimeseries/rasterscan/L_{L}_g_*_a_*_B_{B}_mu_{mu}_K_{K}.tsv")
     files = glob.glob(pattern)
     
     if not files:
         print(f"No files found with pattern: {pattern}")
         return {}
     
-    print(f"Found {len(files)} files")
+    print(f"Found {len(files)} files matching L={L}, B={B}, mu={mu}, K={K}")
     
     lattice_data = {}
     
     for filename in tqdm(files, desc="Loading final lattices"):
-        gamma, alpha, L, B, mu, K = extract_params_from_filename(filename)
+        gamma, alpha, L_file, B_file, mu_file, K_file = extract_params_from_filename(filename)
         
         if gamma is None or alpha is None:
+            continue
+            
+        # Double-check that the extracted parameters match what we're looking for
+        if L_file != L or B_file != B or mu_file != mu or K_file != K:
             continue
             
         try:
@@ -158,10 +162,10 @@ def load_final_lattices():
                 lattice_data[(gamma, alpha)] = {
                     'lattice': lattice,
                     'step': step,
-                    'L': L,
-                    'B': B,
-                    'mu': mu,
-                    'K': K
+                    'L': L_file,
+                    'B': B_file,
+                    'mu': mu_file,
+                    'K': K_file
                 }
         except Exception as e:
             print(f"Error processing {filename}: {e}")
@@ -169,7 +173,7 @@ def load_final_lattices():
     
     return lattice_data
 
-def create_lattice_grid_plot(lattice_data):
+def create_lattice_grid_plot(lattice_data, L, B, mu, K):
     """Create a grid plot of lattices organized by gamma and alpha."""
     if not lattice_data:
         print("No lattice data to plot")
@@ -181,9 +185,6 @@ def create_lattice_grid_plot(lattice_data):
     
     print(f"Gamma values: {gammas}")
     print(f"Alpha values: {alphas}")
-    
-    # Get B value (assuming all files have same B)
-    B = next(iter(lattice_data.values()))['B']
     
     # Create color map for bitstrings
     color_map = None
@@ -211,12 +212,12 @@ def create_lattice_grid_plot(lattice_data):
                 data = lattice_data[(gamma, alpha)]
                 lattice = data['lattice']
                 step = data['step']
-                L = data['L']
+                L_current = data['L']
                 
                 # Create RGB image
-                rgb_img = np.zeros((L, L, 3))
-                for x in range(L):
-                    for y in range(L):
+                rgb_img = np.zeros((L_current, L_current, 3))
+                for x in range(L_current):
+                    for y in range(L_current):
                         rgb_img[x, y] = bitstring_to_color(lattice[x, y], color_map)
                 
                 ax.imshow(rgb_img, interpolation='nearest')
@@ -231,25 +232,27 @@ def create_lattice_grid_plot(lattice_data):
             ax.set_xticks([])
             ax.set_yticks([])
     
-    # Add overall labels
-    fig.suptitle('Final Lattice States (Colored by Language)', fontsize=16)
+    # Add overall labels with parameter values
+    fig.suptitle(f'Final Lattice States (Colored by Language)\n(L={L}, B={B}, μ={mu}, K={K})', fontsize=16)
     fig.text(0.5, 0.02, 'Gamma (Global Interaction Strength)', ha='center', fontsize=14)
     fig.text(0.02, 0.5, 'Alpha (Local Interaction Strength)', va='center', rotation='vertical', fontsize=14)
     
     plt.tight_layout(rect=[0.03, 0.03, 1, 0.95])
     
-    # Save the plot
+    # Save the plot with parameters in filename
     output_dir = "src/understandabilityVsHamming2D/commutableHamming/plots/latticeGrid"
     os.makedirs(output_dir, exist_ok=True)
-    fname = f"{output_dir}/final_lattices_grid.png"
+    fname = f"{output_dir}/final_lattices_grid_L_{L}_B_{B}_mu_{mu}_K_{K}.png"
     plt.savefig(fname, dpi=300, bbox_inches='tight')
-    plt.show()
     
     print(f"Plot saved to: {fname}")
 
-def main():
-    # Load final lattices from all files
-    lattice_data = load_final_lattices()
+def main(L=256, B=16, mu=0.001, K=1):
+    """Main function that takes parameters and finds matching files."""
+    print(f"Looking for files with parameters: L={L}, B={B}, mu={mu}, K={K}")
+    
+    # Load final lattices from files matching the specified parameters
+    lattice_data = load_final_lattices(L, B, mu, K)
     
     if not lattice_data:
         print("No valid lattice data found.")
@@ -258,7 +261,8 @@ def main():
     print(f"Successfully loaded {len(lattice_data)} lattices")
     
     # Create the grid plot
-    create_lattice_grid_plot(lattice_data)
+    create_lattice_grid_plot(lattice_data, L, B, mu, K)
 
 if __name__ == "__main__":
-    main()
+    main(L=256, B=16, mu=0.1, K=1)
+    

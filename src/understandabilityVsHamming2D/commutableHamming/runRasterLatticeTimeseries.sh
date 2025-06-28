@@ -17,7 +17,7 @@ GAMMA_VALUES=(-1 0 1 2 3 4 5)
 ALPHA_VALUES=(-1 0 1 2 3 4 5)
 
 # Fixed parameters (edit as needed)
-MU=0.001
+MU=0.1
 KILL_RADIUS=1
 STEPS=60000
 

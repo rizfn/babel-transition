@@ -154,16 +154,16 @@ def worker_process_file(filename):
     """Wrapper function for multiprocessing."""
     return process_file_memory_efficient(filename)
 
-def main():
-    # Path to lattice files
-    pattern = os.path.join(os.path.dirname(__file__), "outputs/latticeTimeseries/rasterscan/L_*_g_*_a_*_B_*_mu_*_K_*.tsv")
+def load_cluster_data(L, B, mu, K):
+    """Load and compute cluster data for all files matching the specified parameters."""
+    pattern = os.path.join(os.path.dirname(__file__), f"outputs/latticeTimeseries/rasterscan/L_{L}_g_*_a_*_B_{B}_mu_{mu}_K_{K}.tsv")
     files = glob.glob(pattern)
     
     if not files:
         print(f"No files found with pattern: {pattern}")
-        return
+        return []
     
-    print(f"Found {len(files)} files")
+    print(f"Found {len(files)} files matching L={L}, B={B}, mu={mu}, K={K}")
     
     # Determine number of processes (leave 4 CPUs free)
     total_cpus = mp.cpu_count()
@@ -177,15 +177,22 @@ def main():
         with tqdm(total=len(files), desc="Processing files") as pbar:
             for result in pool.imap(worker_process_file, files):
                 if result is not None:
-                    results.append(result)
+                    # Validate that the result matches our requested parameters
+                    gamma, alpha, sqrt_weighted_cluster_size, L_file, B_file, mu_file, K_file = result
+                    if L_file == L and B_file == B and mu_file == mu and K_file == K:
+                        results.append(result)
                 pbar.update(1)
     
-    if len(results) == 0:
-        print("No valid results found.")
+    return results
+
+def create_cluster_heatmap(cluster_data, L, B, mu, K):
+    """Create a heatmap of sqrt weighted cluster sizes organized by gamma and alpha."""
+    if not cluster_data:
+        print("No cluster data to plot")
         return
     
     # Convert to DataFrame for easier handling
-    df = pd.DataFrame(results, columns=['gamma', 'alpha', 'sqrt_weighted_cluster_size', 'L', 'B', 'mu', 'K'])
+    df = pd.DataFrame(cluster_data, columns=['gamma', 'alpha', 'sqrt_weighted_cluster_size', 'L', 'B', 'mu', 'K'])
     
     print(f"Successfully processed {len(df)} files")
     print("DataFrame summary:")
@@ -247,22 +254,37 @@ def main():
     
     ax.set_xlabel('Gamma (global interaction strength)')
     ax.set_ylabel('Alpha (local interaction strength)')
-    ax.set_title('Square Root of Weighted Cluster Size vs Alpha and Gamma')
+    ax.set_title(f'Square Root of Weighted Cluster Size vs Alpha and Gamma\n(L={L}, B={B}, μ={mu}, K={K})')
     
-    # Save the plot
+    # Save the plot with parameters in filename
     output_dir = "src/understandabilityVsHamming2D/commutableHamming/plots/clusterSizes"
     os.makedirs(output_dir, exist_ok=True)
-    fname = f"{output_dir}/heatmap_sqrtWeightedClusterSize.png"
-    plt.savefig(fname, dpi=300, bbox_inches='tight')
+    fname = f"{output_dir}/heatmap_sqrtWeightedClusterSize_L_{L}_B_{B}_mu_{mu}_K_{K}.png"
     plt.tight_layout()
-    plt.show()
+    plt.savefig(fname, dpi=300, bbox_inches='tight')
     
     print(f"Plot saved to: {fname}")
     
-    # Save the DataFrame for future use
-    csv_fname = f"{output_dir}/sqrt_weighted_cluster_size_results.csv"
+    # Save the DataFrame for future use with parameters in filename
+    csv_fname = f"{output_dir}/sqrt_weighted_cluster_size_results_L_{L}_B_{B}_mu_{mu}_K_{K}.csv"
     df.to_csv(csv_fname, index=False)
     print(f"Results saved to: {csv_fname}")
 
+def main(L=256, B=16, mu=0.001, K=1):
+    """Main function that takes parameters and finds matching files."""
+    print(f"Looking for files with parameters: L={L}, B={B}, mu={mu}, K={K}")
+    
+    # Load and compute cluster data from files matching the specified parameters
+    cluster_data = load_cluster_data(L, B, mu, K)
+    
+    if not cluster_data:
+        print("No valid cluster data found.")
+        return
+    
+    print(f"Successfully computed cluster data for {len(cluster_data)} files")
+    
+    # Create the heatmap
+    create_cluster_heatmap(cluster_data, L, B, mu, K)
+
 if __name__ == "__main__":
-    main()
+    main(L=256, B=16, mu=0.1, K=1)
