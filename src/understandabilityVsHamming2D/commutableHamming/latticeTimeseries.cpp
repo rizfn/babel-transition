@@ -285,7 +285,7 @@ int main(int argc, char *argv[])
 
     std::string exeDir = std::filesystem::path(argv[0]).parent_path().string();
     std::ostringstream fname;
-    fname << exeDir << "/outputs/latticeTimeseries/rasterscan/L_" << L << "_g_" << gamma << "_a_" << alpha << "_B_" << B << "_mu_" << mu << "_K_" << killRadius << ".tsv";
+    fname << exeDir << "/outputs/latticeTimeseries/rasterscanMu/L_" << L << "_g_" << gamma << "_a_" << alpha << "_B_" << B << "_mu_" << mu << "_K_" << killRadius << ".tsv";
 
     run(gamma, alpha, mu, killRadius, steps, fname.str());
 
