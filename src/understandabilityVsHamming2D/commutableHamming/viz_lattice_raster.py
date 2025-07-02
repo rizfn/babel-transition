@@ -264,5 +264,5 @@ def main(L=256, B=16, mu=0.001, K=1):
     create_lattice_grid_plot(lattice_data, L, B, mu, K)
 
 if __name__ == "__main__":
-    main(L=256, B=16, mu=0.1, K=1)
+    main(L=256, B=16, mu=0.02, K=1)
     
