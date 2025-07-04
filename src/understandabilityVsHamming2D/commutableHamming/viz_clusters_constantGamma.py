@@ -8,14 +8,20 @@ import re
 import gc
 import multiprocessing as mp
 from tqdm import tqdm
-import argparse
 
-def extract_alpha_from_filename(filename):
-    """Extract alpha from filename."""
+def extract_params_from_filename(filename):
+    """Extract gamma, alpha, L, B, mu, K from filename."""
+    gamma = re.search(r'g_([+-]?\d+\.?\d*)_', filename)
     alpha = re.search(r'a_([+-]?\d+\.?\d*)_', filename)
-    if alpha:
-        return float(alpha.group(1))
-    return None
+    L = re.search(r'L_([0-9]+)', filename)
+    B = re.search(r'B_([0-9]+)', filename)
+    mu = re.search(r'mu_([0-9.]+)', filename)
+    K = re.search(r'K_([0-9]+)', filename)
+    
+    if gamma and alpha and L and B and mu and K:
+        return (float(gamma.group(1)), float(alpha.group(1)),
+                int(L.group(1)), int(B.group(1)), float(mu.group(1)), int(K.group(1)))
+    return (None,)*6
 
 def parse_cluster_line(line):
     """Parse a line from cluster timeseries file."""
@@ -59,7 +65,7 @@ def process_file_memory_efficient(filename):
     """
     Process a single cluster timeseries file to compute sqrt of weighted average cluster size.
     """
-    alpha = extract_alpha_from_filename(filename)
+    gamma, alpha, L, B, mu, K = extract_params_from_filename(filename)
     
     if alpha is None:
         return None
@@ -92,7 +98,7 @@ def process_file_memory_efficient(filename):
             expectation_squared = total_weighted_sum / total_area_sum
             sqrt_weighted_cluster_size = np.sqrt(expectation_squared)
         
-        return (alpha, sqrt_weighted_cluster_size)
+        return (gamma, alpha, L, B, mu, K, sqrt_weighted_cluster_size)
     
     except Exception as e:
         print(f"Error processing {filename}: {e}")
@@ -102,28 +108,18 @@ def worker_process_file(filename):
     """Wrapper function for multiprocessing."""
     return process_file_memory_efficient(filename)
 
-def main():
-    parser = argparse.ArgumentParser(description='Analyze cluster timeseries data for varying alpha values')
-    parser.add_argument('--L', type=int, default=256, help='Lattice size')
-    parser.add_argument('--B', type=int, default=16, help='Bitstring length')
-    parser.add_argument('--gamma', type=float, default=3, help='Gamma value')
-    parser.add_argument('--mu', type=float, default=0.001, help='Mutation rate')
-    parser.add_argument('--K', type=int, default=1, help='Kill radius')
-    parser.add_argument('--output_dir', type=str, default="constantGamma", help='Output subdirectory')
-    
-    args = parser.parse_args()
-    
-    # Build file pattern with wildcard for alpha
+def load_cluster_data(L, B, gamma, mu, K, output_dir="constantGamma"):
+    """Load cluster data from files matching the specified parameters."""
+    # First, find all files in the directory
     base_dir = os.path.dirname(__file__)
-    pattern = os.path.join(base_dir, f"outputs/clusterTimeseries/{args.output_dir}/L_{args.L}_g_{args.gamma}_a_*_B_{args.B}_mu_{args.mu}_K_{args.K}.tsv")
+    pattern = os.path.join(base_dir, f"outputs/clusterTimeseries/{output_dir}/L_{L}_g_{gamma}_a_*_B_{B}_mu_{mu}_K_{K}.tsv")
     files = glob.glob(pattern)
     
     if not files:
         print(f"No files found with pattern: {pattern}")
-        return
+        return {}
     
-    print(f"Found {len(files)} files")
-    print(f"Parameters: L={args.L}, B={args.B}, gamma={args.gamma}, mu={args.mu}, K={args.K}")
+    print(f"Found {len(files)} files matching L={L}, B={B}, gamma={gamma}, mu={mu}, K={K}")
     
     # Determine number of processes (leave 4 CPUs free)
     total_cpus = mp.cpu_count()
@@ -137,17 +133,33 @@ def main():
         with tqdm(total=len(files), desc="Processing files") as pbar:
             for result in pool.imap(worker_process_file, files):
                 if result is not None:
-                    results.append(result)
+                    gamma_file, alpha, L_file, B_file, mu_file, K_file, sqrt_weighted_cluster_size = result
+                    
+                    # Double-check that the extracted parameters match what we're looking for
+                    if (L_file == L and B_file == B and gamma_file == gamma and 
+                        mu_file == mu and K_file == K):
+                        results.append(result)
+                
                 pbar.update(1)
     
+    return results
+
+def main(L=128, B=16, gamma=3, mu=0.001, K=1, output_dir="constantGamma"):
+    """Main function that takes parameters and finds matching files."""
+    print(f"Looking for files with parameters: L={L}, B={B}, gamma={gamma}, mu={mu}, K={K}")
+    
+    # Load cluster data from files matching the specified parameters
+    results = load_cluster_data(L, B, gamma, mu, K, output_dir)
+    
     if len(results) == 0:
-        print("No valid results found.")
+        print("No valid cluster data found.")
         return
     
-    # Convert to DataFrame for easier handling
-    df = pd.DataFrame(results, columns=['alpha', 'sqrt_weighted_cluster_size'])
+    print(f"Successfully processed {len(results)} files")
     
-    print(f"Successfully processed {len(df)} files")
+    # Convert to DataFrame for easier handling
+    df = pd.DataFrame(results, columns=['gamma', 'alpha', 'L', 'B', 'mu', 'K', 'sqrt_weighted_cluster_size'])
+    
     print("DataFrame summary:")
     print(df.head())
     
@@ -173,18 +185,18 @@ def main():
     # Customize the plot
     ax.set_xlabel('Alpha (local interaction strength)', fontsize=12)
     ax.set_ylabel('√(E[Cluster Size²])', fontsize=12)
-    ax.set_title(f'Square Root of Weighted Cluster Size vs Alpha\n(γ={args.gamma}, L={args.L}, B={args.B}, μ={args.mu}, K={args.K})', fontsize=14)
+    ax.set_title(f'Square Root of Weighted Cluster Size vs Alpha\n(L={L}, B={B}, γ={gamma}, μ={mu}, K={K})', fontsize=14)
     ax.grid(True, alpha=0.3)
     ax.legend()
     
-    # Save the plot
-    output_dir = f"src/understandabilityVsHamming2D/commutableHamming/plots/clusterSizes/{args.output_dir}"
-    os.makedirs(output_dir, exist_ok=True)
-    fname = f"{output_dir}/sqrt_weighted_cluster_size_vs_alpha_g_{args.gamma}.png"
+    # Save the plot with all parameters in filename
+    output_plot_dir = f"src/understandabilityVsHamming2D/commutableHamming/plots/clusterSizes/{output_dir}"
+    os.makedirs(output_plot_dir, exist_ok=True)
+    fname = f"{output_plot_dir}/sqrt_weighted_cluster_size_vs_alpha_L_{L}_B_{B}_g_{gamma}_mu_{mu}_K_{K}.png"
     plt.tight_layout()
     plt.savefig(fname, dpi=300, bbox_inches='tight')
     
     print(f"Plot saved to: {fname}")
 
 if __name__ == "__main__":
-    main()
+    main(L=256, B=16, gamma=3, mu=0.001, K=1, output_dir="constantGamma")
