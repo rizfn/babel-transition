@@ -18,6 +18,8 @@ DIRNAME="L_${L}_g_${gamma}_a_${alpha}_B_${B}_mu_${mu}_K_${K}"
 # OUTDIR="src/understandabilityVsHamming2D/commutableHamming/plots/latticeAnim"
 FRAMES_DIR="src/understandabilityVsHamming2D/commutableHamming/plots/latticeAnim/start1/frames/$DIRNAME"
 OUTDIR="src/understandabilityVsHamming2D/commutableHamming/plots/latticeAnim/start1"
+# FRAMES_DIR="src/understandabilityVsHamming2D/commutableHamming/plots/latticeFitnessAnim/start1/frames/$DIRNAME"
+# OUTDIR="src/understandabilityVsHamming2D/commutableHamming/plots/latticeFitnessAnim/start1"
 OUTFILE="$OUTDIR/${DIRNAME%/}.mp4"
 
 if [ ! -d "$FRAMES_DIR" ]; then
