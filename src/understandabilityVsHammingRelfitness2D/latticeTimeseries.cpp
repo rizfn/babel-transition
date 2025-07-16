@@ -30,7 +30,6 @@ constexpr int B = 16;  // bitstring length
 constexpr int N_STEPS = 1000;
 constexpr double DEFAULT_GAMMA = 1;
 constexpr double DEFAULT_ALPHA = 1;
-constexpr int KILL_RADIUS = 1;
 constexpr double DEFAULT_MU = 0.001;
 constexpr int STEPS_TO_RECORD = 40000;
 constexpr int RECORDING_SKIP = 1;
@@ -75,61 +74,11 @@ std::vector<int> mutate(const std::vector<int> &lang, double mu)
     return mutated;
 }
 
-std::tuple<int, int> find_weakest_in_radius(
-    const std::vector<std::vector<Agent>> &lattice,
-    int cx, int cy, int radius)
-{
-    double min_fitness = std::numeric_limits<double>::infinity();
-    std::vector<std::pair<int, int>> weakest_sites;
-    // First pass: find minimum fitness among non-immune
-    for (int dx = -radius; dx <= radius; ++dx)
-    {
-        for (int dy = -radius; dy <= radius; ++dy)
-        {
-            if (std::abs(dx) + std::abs(dy) > radius)
-                continue;
-            int nx = (cx + dx + L) % L;
-            int ny = (cy + dy + L) % L;
-            if (!lattice[nx][ny].immune)
-            {
-                if (lattice[nx][ny].fitness < min_fitness)
-                {
-                    min_fitness = lattice[nx][ny].fitness;
-                }
-            }
-        }
-    }
-    // Second pass: collect all non-immune sites with min_fitness
-    for (int dx = -radius; dx <= radius; ++dx)
-    {
-        for (int dy = -radius; dy <= radius; ++dy)
-        {
-            if (std::abs(dx) + std::abs(dy) > radius)
-                continue;
-            int nx = (cx + dx + L) % L;
-            int ny = (cy + dy + L) % L;
-            if (!lattice[nx][ny].immune && lattice[nx][ny].fitness == min_fitness)
-            {
-                weakest_sites.emplace_back(nx, ny);
-            }
-        }
-    }
-    if (!weakest_sites.empty())
-    {
-        int idx = std::uniform_int_distribution<>(0, weakest_sites.size() - 1)(gen);
-        return {weakest_sites[idx].first, weakest_sites[idx].second};
-    }
-    // fallback: return self
-    return {cx, cy};
-}
-
-
 void update(
     std::vector<std::vector<Agent>> &lattice,
     double gamma,
     double alpha,
-    double mu,
-    int killRadius)
+    double mu)
 {
     // 1. Calculate mean-field bitstring
     std::vector<double> mean_field(B, 0.0);
@@ -289,7 +238,6 @@ void run(
     double gamma,
     double alpha,
     double mu,
-    int killRadius,
     int steps,
     const std::string &output_path)
 {
@@ -302,7 +250,7 @@ void run(
     std::ofstream fout(output_path);
     for (int step = 0; step < steps; ++step)
     {
-        update(lattice, gamma, alpha, mu, killRadius);
+        update(lattice, gamma, alpha, mu);
 
         if (step % 100 == 0)
             std::cout << "Step " << step << "/" << steps << "\r" << std::flush;
@@ -334,7 +282,6 @@ int main(int argc, char *argv[])
     double gamma = DEFAULT_GAMMA;
     double alpha = DEFAULT_ALPHA;
     double mu = DEFAULT_MU;
-    int killRadius = KILL_RADIUS;
     int steps = N_STEPS;
     if (argc > 1)
         gamma = std::stod(argv[1]);
@@ -343,15 +290,13 @@ int main(int argc, char *argv[])
     if (argc > 3)
         mu = std::stod(argv[3]);
     if (argc > 4)
-        killRadius = std::stoi(argv[4]);
-    if (argc > 5)
-        steps = std::stoi(argv[5]);
+        steps = std::stoi(argv[4]);
 
     std::string exeDir = std::filesystem::path(argv[0]).parent_path().string();
     std::ostringstream fname;
-    fname << exeDir << "/outputs/latticeTimeseries/timeEvoDeterministic/L_" << L << "_g_" << gamma << "_a_" << alpha << "_B_" << B << "_mu_" << mu << "_K_" << killRadius << ".tsv";
+    fname << exeDir << "/outputs/latticeTimeseries/timeEvoDeterministic/L_" << L << "_g_" << gamma << "_a_" << alpha << "_B_" << B << "_mu_" << mu << ".tsv";
 
-    run(gamma, alpha, mu, killRadius, steps, fname.str());
+    run(gamma, alpha, mu, steps, fname.str());
 
     return 0;
 }

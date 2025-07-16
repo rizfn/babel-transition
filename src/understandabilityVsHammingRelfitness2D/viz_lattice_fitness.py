@@ -156,10 +156,10 @@ def plot_lattice_and_fitness(lattice, step, gamma, alpha, outdir, color_map=None
     plt.savefig(outname, dpi=150, bbox_inches='tight')
     plt.close()
 
-def process_lattice_fitness(L, B, gamma, alpha, mu, K):
+def process_lattice_fitness(L, B, gamma, alpha, mu):
     """Process the lattice timeseries file and create fitness visualizations."""
-    filename = f"src/understandabilityVsHammingRelfitness2D/outputs/latticeTimeseries/timeEvoDeterministic/L_{L}_g_{gamma}_a_{alpha}_B_{B}_mu_{mu}_K_{K}.tsv"
-    outdir = f"src/understandabilityVsHammingRelfitness2D/plots/latticeFitnessDeterministic/frames/L_{L}_g_{gamma}_a_{alpha}_B_{B}_mu_{mu}_K_{K}"
+    filename = f"src/understandabilityVsHammingRelfitness2D/outputs/latticeTimeseries/timeEvoDeterministic/L_{L}_g_{gamma}_a_{alpha}_B_{B}_mu_{mu}.tsv"
+    outdir = f"src/understandabilityVsHammingRelfitness2D/plots/latticeFitnessDeterministic/frames/L_{L}_g_{gamma}_a_{alpha}_B_{B}_mu_{mu}"
     
     # Create fixed color map once for consistency across all frames
     color_map = None
@@ -171,9 +171,6 @@ def process_lattice_fitness(L, B, gamma, alpha, mu, K):
             if not line.strip():
                 continue
             step, lattice = parse_lattice_line(line, L, B)
-            # Only process every 100 steps to avoid too many frames
-            if step % 100 != 0:
-                continue
             plot_lattice_and_fitness(lattice, step, gamma, alpha, outdir, color_map)
             print(f"Processed step {step}")
 
@@ -184,7 +181,6 @@ if __name__ == "__main__":
     parser.add_argument("--gamma", type=float, default=1)
     parser.add_argument("--alpha", type=float, default=1)
     parser.add_argument("--mu", type=float, default=0.001)
-    parser.add_argument("--K", type=int, default=1)
     args = parser.parse_args()
 
-    process_lattice_fitness(args.L, args.B, args.gamma, args.alpha, args.mu, args.K)
+    process_lattice_fitness(args.L, args.B, args.gamma, args.alpha, args.mu)
