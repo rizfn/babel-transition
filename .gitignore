@@ -6,3 +6,4 @@ babel-env
 *outputs/
 *.exe
 **/frames
+src/dataAnalysis/**/data/**
