@@ -26,14 +26,14 @@ std::random_device rd;
 std::mt19937 gen(rd());
 
 // Default parameters
-constexpr double DEFAULT_GAMMA = 0;
-constexpr double DEFAULT_ALPHA = 1;
+constexpr double DEFAULT_GAMMA = 1;
+constexpr double DEFAULT_ALPHA = 0.4;
 constexpr int DEFAULT_N = 1000;
 constexpr int DEFAULT_B = 16;
-constexpr double DEFAULT_MU = 0.01;
+constexpr double DEFAULT_MU = 0.000001;
 constexpr int DEFAULT_GENERATIONS = 1000;
-constexpr int LANGUAGE_LAST_GENS_TO_RECORD = 100;
-constexpr int LANGUAGE_RECORDING_SKIP = 10;
+constexpr int LANGUAGE_LAST_GENS_TO_RECORD = 200;
+constexpr int LANGUAGE_RECORDING_SKIP = 1;
 
 // Define a language as a bitstring
 using Language = std::vector<int>;
@@ -240,15 +240,28 @@ int main(int argc, char* argv[]) {
 
     std::string exeDir = std::filesystem::path(argv[0]).parent_path().string();
 
-    // Output filenames
+    // // Output filenames
+    // std::ostringstream fitness_stream;
+    // fitness_stream << exeDir << "/outputs/top50/fitness/g_" << gamma
+    //                << "_a_" << alpha << "_N_" << N
+    //                << "_B_" << B << "_mu_" << mu << ".tsv";
+    // std::string fitness_file = fitness_stream.str();
+
+    // std::ostringstream langs_stream;
+    // langs_stream << exeDir << "/outputs/top50/languages/g_" << gamma
+    //              << "_a_" << alpha << "_N_" << N
+    //              << "_B_" << B << "_mu_" << mu << ".tsv";
+    // std::string languages_file = langs_stream.str();
+
+        // Output filenames
     std::ostringstream fitness_stream;
-    fitness_stream << exeDir << "/outputs/top50/fitness/g_" << gamma
+    fitness_stream << exeDir << "/outputs/timeseries/fitness/g_" << gamma
                    << "_a_" << alpha << "_N_" << N
                    << "_B_" << B << "_mu_" << mu << ".tsv";
     std::string fitness_file = fitness_stream.str();
 
     std::ostringstream langs_stream;
-    langs_stream << exeDir << "/outputs/top50/languages/g_" << gamma
+    langs_stream << exeDir << "/outputs/timeseries/languages/g_" << gamma
                  << "_a_" << alpha << "_N_" << N
                  << "_B_" << B << "_mu_" << mu << ".tsv";
     std::string languages_file = langs_stream.str();
