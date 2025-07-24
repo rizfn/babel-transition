@@ -16,12 +16,11 @@ echo "Total CPUs: $TOTAL_CPUS, Running with max $MAX_PARALLEL parallel jobs (lea
 # Parameter ranges - now alpha varies and gamma is fixed
 ALPHA_VALUES=(-0.2 0 0.2 0.4 0.6 0.8 1.0 1.2 1.4)
 # # Exactly: 1e-4, (in between), (in between), 1e-3, (in between), (in between), 1e-2, (in between)
-# MU_VALUES=(0.0001 0.0002154435 0.0004641589 0.001 0.002154435 0.004641589 0.01 0.02154435)
-MU_VALUES=(0.00005 0.00010772175 0.00023207945 0.0005 0.0010772175 0.0023207945 0.005 0.010772175)
+MU_VALUES=(0.0001 0.0002154435 0.0004641589 0.001 0.002154435 0.004641589 0.01 0.02154435)
 
 # Fixed parameters
 L=256
-B=32
+B=16
 GAMMA=1
 STEPS=60000
 STEPS_TO_RECORD=40000
