@@ -1,14 +1,13 @@
 class LatticeSimulation {
     constructor() {
-        this.L = 64; // Smaller lattice for web performance
-        this.B = 16; // Bitstring length
+        this.L = 64;
+        this.B = 16;
         this.gamma = 1;
         this.alpha = 1;
         this.mu = 0.001;
         this.step = 0;
         this.isRunning = false;
-        this.selectedLanguage = null; // Track selected language
-        this.baseFontSize = 1.5; // Base font size in rem - change this to scale all text
+        this.selectedLanguage = null;
         
         this.lattice = this.initializeLattice();
         this.colorMap = this.createBitstringColorMap();
@@ -38,7 +37,6 @@ class LatticeSimulation {
         const colorMap = new Map();
         const numBitstrings = Math.pow(2, this.B);
         
-        // Generate all possible bitstrings
         const allBitstrings = [];
         for (let i = 0; i < numBitstrings; i++) {
             const bits = [];
@@ -48,20 +46,17 @@ class LatticeSimulation {
             allBitstrings.push(bits.join(''));
         }
         
-        // Create shuffled colors from rainbow colormap
         const colors = [];
         for (let i = 0; i < numBitstrings; i++) {
             const hue = (i / (numBitstrings - 1)) * 360;
             colors.push(`hsl(${hue}, 70%, 50%)`);
         }
         
-        // Shuffle colors using Fisher-Yates algorithm
         for (let i = colors.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [colors[i], colors[j]] = [colors[j], colors[i]];
         }
         
-        // Map bitstrings to colors
         allBitstrings.forEach((bitstring, index) => {
             colorMap.set(bitstring, colors[index]);
         });
@@ -81,7 +76,6 @@ class LatticeSimulation {
             }
         }
         
-        // Sort languages by Hamming weight (number of 1s), then lexicographically
         const sortedLanguages = Array.from(languageSet).sort((a, b) => {
             const weightA = a.split('').reduce((sum, bit) => sum + parseInt(bit), 0);
             const weightB = b.split('').reduce((sum, bit) => sum + parseInt(bit), 0);
@@ -119,7 +113,6 @@ class LatticeSimulation {
         let minFitness = Infinity;
         const weakestNeighbors = [];
         
-        // Find minimum fitness among non-immune neighbors
         for (const [nx, ny] of neighbors) {
             const neighbor = this.lattice[nx][ny];
             if (!neighbor.immune && neighbor.fitness < minFitness) {
@@ -127,7 +120,6 @@ class LatticeSimulation {
             }
         }
         
-        // Collect all non-immune neighbors with minimum fitness
         for (const [nx, ny] of neighbors) {
             const neighbor = this.lattice[nx][ny];
             if (!neighbor.immune && neighbor.fitness === minFitness) {
@@ -144,7 +136,6 @@ class LatticeSimulation {
     }
     
     update() {
-        // 1. Calculate mean-field bitstring
         const meanField = new Array(this.B).fill(0);
         const totalAgents = this.L * this.L;
         
@@ -156,22 +147,18 @@ class LatticeSimulation {
             }
         }
         
-        // Normalize to get probabilities
         for (let b = 0; b < this.B; b++) {
             meanField[b] /= totalAgents;
         }
         
-        // 2. Fitness evaluation
         for (let i = 0; i < this.L; i++) {
             for (let j = 0; j < this.L; j++) {
                 const agent = this.lattice[i][j];
                 agent.fitness = 0;
                 
-                // Global interaction with mean field
                 const globalFitness = this.gamma * this.meanFieldDistance(agent.language, meanField);
                 agent.fitness += globalFitness;
                 
-                // Local interactions with neighbors
                 const neighbors = [
                     [(i + 1) % this.L, j],
                     [(i - 1 + this.L) % this.L, j],
@@ -190,7 +177,6 @@ class LatticeSimulation {
             }
         }
         
-        // 3. Reproduction: stochastic invasion trials
         const positions = [];
         for (let i = 0; i < this.L; i++) {
             for (let j = 0; j < this.L; j++) {
@@ -198,20 +184,17 @@ class LatticeSimulation {
             }
         }
         
-        // Shuffle positions
         for (let i = positions.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [positions[i], positions[j]] = [positions[j], positions[i]];
         }
         
-        // Reset immunity
         for (let i = 0; i < this.L; i++) {
             for (let j = 0; j < this.L; j++) {
                 this.lattice[i][j].immune = false;
             }
         }
         
-        // Perform invasion trials
         const trials = Math.floor((this.L * this.L) / 2);
         for (let trial = 0; trial < trials && trial < positions.length; trial++) {
             const [i, j] = positions[trial];
@@ -223,14 +206,12 @@ class LatticeSimulation {
             if (wi === -1 && wj === -1) continue;
             
             if (this.lattice[i][j].fitness > this.lattice[wi][wj].fitness) {
-                // Invade: clone current agent into weakest neighbor position
                 this.lattice[wi][wj].language = [...this.lattice[i][j].language];
                 this.lattice[i][j].immune = true;
                 this.lattice[wi][wj].immune = true;
             }
         }
         
-        // 4. Mutation
         for (let i = 0; i < this.L; i++) {
             for (let j = 0; j < this.L; j++) {
                 for (let b = 0; b < this.B; b++) {
@@ -245,179 +226,132 @@ class LatticeSimulation {
     }
     
     setupUI() {
-        const body = d3.select('body')
-            .style('margin', '0')
-            .style('padding', '0')
-            .style('background-color', 'transparent');
+        const body = d3.select('body');
         
-        // Create main container with grid layout
         const mainContainer = body.append('div')
-            .style('display', 'grid')
-            .style('grid-template-columns', '10% 1fr 1fr')
-            .style('height', '100vh')
-            .style('width', '100vw')
-            .style('margin', '0')
-            .style('padding', '0')
-            .style('box-sizing', 'border-box');
+            .attr('class', 'main-container');
         
-        // Controls container (10% width)
         const controlsContainer = mainContainer.append('div')
-            .style('display', 'flex')
-            .style('flex-direction', 'column')
-            .style('gap', '10px')
-            .style('padding', '10px')
-            .style('box-sizing', 'border-box');
+            .attr('class', 'controls-container');
         
-        // Step counter
         this.stepDisplay = controlsContainer.append('div')
-            .style('font-size', `${this.baseFontSize * 1.3}rem`)
-            .style('font-weight', 'bold')
+            .attr('class', 'step-display')
             .text('Step: 0');
         
-        // Control buttons
         this.startButton = controlsContainer.append('button')
+            .attr('class', 'control-button')
             .text('Start')
-            .style('padding', '8px 16px')
-            .style('font-size', `${this.baseFontSize}rem`)
             .on('click', () => this.toggleSimulation());
         
         controlsContainer.append('button')
+            .attr('class', 'control-button')
             .text('Step')
-            .style('padding', '8px 16px')
-            .style('font-size', `${this.baseFontSize}rem`)
             .on('click', () => this.singleStep());
         
         controlsContainer.append('button')
+            .attr('class', 'control-button')
             .text('Reset')
-            .style('padding', '8px 16px')
-            .style('font-size', `${this.baseFontSize}rem`)
             .on('click', () => this.reset());
         
-        // Parameter controls
+        // Gamma control
         const gammaContainer = controlsContainer.append('div')
-            .style('display', 'flex')
-            .style('flex-direction', 'column')
-            .style('gap', '5px');
+            .attr('class', 'parameter-container');
         
         gammaContainer.append('label')
-            .text('Gamma:')
-            .style('font-weight', 'bold')
-            .style('font-size', `${this.baseFontSize}rem`);
+            .attr('class', 'parameter-label')
+            .text('Gamma:');
         
         const gammaInput = gammaContainer.append('input')
+            .attr('class', 'parameter-input')
             .attr('type', 'range')
             .attr('min', '0')
             .attr('max', '5')
             .attr('step', '0.1')
             .attr('value', this.gamma)
-            .style('width', '100%')
             .on('input', (event) => {
                 this.gamma = parseFloat(event.target.value);
                 gammaDisplay.text(this.gamma.toFixed(1));
             });
         
         const gammaDisplay = gammaContainer.append('span')
-            .text(this.gamma.toFixed(1))
-            .style('text-align', 'center')
-            .style('font-size', `${this.baseFontSize * 0.9}rem`);
+            .attr('class', 'parameter-display')
+            .text(this.gamma.toFixed(1));
         
+        // Alpha control
         const alphaContainer = controlsContainer.append('div')
-            .style('display', 'flex')
-            .style('flex-direction', 'column')
-            .style('gap', '5px');
+            .attr('class', 'parameter-container');
         
         alphaContainer.append('label')
-            .text('Alpha:')
-            .style('font-weight', 'bold')
-            .style('font-size', `${this.baseFontSize}rem`);
+            .attr('class', 'parameter-label')
+            .text('Alpha:');
         
         const alphaInput = alphaContainer.append('input')
+            .attr('class', 'parameter-input')
             .attr('type', 'range')
             .attr('min', '0')
             .attr('max', '5')
             .attr('step', '0.1')
             .attr('value', this.alpha)
-            .style('width', '100%')
             .on('input', (event) => {
                 this.alpha = parseFloat(event.target.value);
                 alphaDisplay.text(this.alpha.toFixed(1));
             });
         
         const alphaDisplay = alphaContainer.append('span')
-            .text(this.alpha.toFixed(1))
-            .style('text-align', 'center')
-            .style('font-size', `${this.baseFontSize * 0.9}rem`);
+            .attr('class', 'parameter-display')
+            .text(this.alpha.toFixed(1));
         
+        // Mu control
         const muContainer = controlsContainer.append('div')
-            .style('display', 'flex')
-            .style('flex-direction', 'column')
-            .style('gap', '5px');
+            .attr('class', 'parameter-container');
         
         muContainer.append('label')
-            .text('Mu:')
-            .style('font-weight', 'bold')
-            .style('font-size', `${this.baseFontSize}rem`);
+            .attr('class', 'parameter-label')
+            .text('Mu:');
         
         const muInput = muContainer.append('input')
+            .attr('class', 'parameter-input')
             .attr('type', 'range')
             .attr('min', '0')
             .attr('max', '0.01')
             .attr('step', '0.0001')
             .attr('value', this.mu)
-            .style('width', '100%')
             .on('input', (event) => {
                 this.mu = parseFloat(event.target.value);
                 muDisplay.text(this.mu.toFixed(4));
             });
         
         const muDisplay = muContainer.append('span')
-            .text(this.mu.toFixed(4))
-            .style('text-align', 'center')
-            .style('font-size', `${this.baseFontSize * 0.9}rem`);
+            .attr('class', 'parameter-display')
+            .text(this.mu.toFixed(4));
         
-        // Store containers for later use
         this.latticeContainer = mainContainer.append('div')
-            .style('display', 'flex')
-            .style('flex-direction', 'column')
-            .style('align-items', 'center')
-            .style('padding', '10px')
-            .style('box-sizing', 'border-box');
+            .attr('class', 'visualization-container');
         
         this.heatmapContainer = mainContainer.append('div')
-            .style('display', 'flex')
-            .style('flex-direction', 'column')
-            .style('align-items', 'center')
-            .style('padding', '10px')
-            .style('box-sizing', 'border-box');
+            .attr('class', 'visualization-container');
     }
     
     setupVisualization() {
-        // Calculate dynamic sizing
         const windowHeight = window.innerHeight;
         const windowWidth = window.innerWidth;
+        const frWidth = (windowWidth - windowWidth * 0.1) / 2;
         
-        // Calculate actual 1fr width (45% of remaining space after 10% for controls)
-        const frWidth = (windowWidth - windowWidth * 0.1) / 2; // Each 1fr column gets half the remaining width
-        
-        // Lattice size: maximize available space
-        const availableHeight = windowHeight - 60; // Account for title and padding
-        const availableWidth = frWidth - 20; // 1fr width minus padding
+        const availableHeight = windowHeight - 60;
+        const availableWidth = frWidth - 20;
         const maxLatticeSize = Math.min(availableHeight, availableWidth);
         const cellSize = Math.floor(maxLatticeSize / this.L);
         const latticeSize = cellSize * this.L;
         
-        // Lattice visualization
         this.latticeContainer.append('h3')
-            .text('Lattice')
-            .style('margin', '0 0 10px 0')
-            .style('font-size', `${this.baseFontSize * 1.2}rem`);
+            .attr('class', 'visualization-title')
+            .text('Lattice');
         
         this.svg = this.latticeContainer
             .append('svg')
             .attr('width', latticeSize)
             .attr('height', latticeSize);
         
-        // Create grid data
         this.gridData = [];
         for (let i = 0; i < this.L; i++) {
             for (let j = 0; j < this.L; j++) {
@@ -429,32 +363,25 @@ class LatticeSimulation {
             }
         }
         
-        // Create cells
         this.cells = this.svg.selectAll('.cell')
             .data(this.gridData)
             .enter()
             .append('rect')
-            .attr('class', 'cell')
+            .attr('class', 'lattice-cell')
             .attr('x', d => d.x * cellSize)
             .attr('y', d => d.y * cellSize)
             .attr('width', cellSize)
             .attr('height', cellSize)
-            .attr('stroke', '#333')
-            .attr('stroke-width', 0.5)
-            .style('cursor', 'pointer')
             .on('click', (event, d) => {
                 const agent = this.lattice[d.x][d.y];
                 const langStr = agent.language.join('');
                 this.selectLanguage(langStr);
             });
         
-        // Language heatmap
         this.heatmapContainer.append('h3')
-            .text('Top 20 Languages')
-            .style('margin', '0 0 10px 0')
-            .style('font-size', `${this.baseFontSize * 1.2}rem`);
+            .attr('class', 'visualization-title')
+            .text('Top 20 Languages');
         
-        // Calculate heatmap dimensions to fit 21 rows
         const maxHeatmapHeight = maxLatticeSize;
         const rowHeight = Math.floor(maxHeatmapHeight / 21);
         const bitWidth = Math.floor((frWidth - 100) / this.B);
@@ -466,7 +393,6 @@ class LatticeSimulation {
         
         this.heatmapGroup = this.heatmapSvg.append('g');
         
-        // Store dimensions for later use
         this.heatmapDimensions = {
             rowHeight: rowHeight,
             bitWidth: bitWidth,
@@ -476,10 +402,8 @@ class LatticeSimulation {
     
     selectLanguage(langStr) {
         if (this.selectedLanguage === langStr) {
-            // Deselect if clicking the same language
             this.selectedLanguage = null;
         } else {
-            // Select new language
             this.selectedLanguage = langStr;
         }
         this.renderSelection();
@@ -489,17 +413,14 @@ class LatticeSimulation {
         const { languages, counts } = this.getUniqueLanguages();
         const { rowHeight, bitWidth, margin } = this.heatmapDimensions;
         
-        // Sort languages by count (descending) and take top 20
         const sortedByCount = languages.sort((a, b) => counts.get(b) - counts.get(a));
         const top20Languages = sortedByCount.slice(0, 20);
         
-        // If a language is selected and not in top 20, add it
         let displayLanguages = [...top20Languages];
         if (this.selectedLanguage && !top20Languages.includes(this.selectedLanguage)) {
             displayLanguages.push(this.selectedLanguage);
         }
         
-        // Bind data to language rows
         const languageRows = this.heatmapGroup
             .selectAll('.language-row')
             .data(displayLanguages.map(lang => ({
@@ -510,34 +431,19 @@ class LatticeSimulation {
                 isSelected: lang === this.selectedLanguage
             })), d => d.langStr);
         
-        // Enter selection
         const enterRows = languageRows.enter()
             .append('g')
             .attr('class', 'language-row')
-            .style('cursor', 'pointer')
             .on('click', (event, d) => {
                 this.selectLanguage(d.langStr);
             });
         
-        // Add background rectangle for highlighting
-        enterRows.append('rect')
-            .attr('class', 'row-background')
-            .attr('x', margin.left - 5)
-            .attr('width', this.B * bitWidth + 10)
-            .attr('height', rowHeight)
-            .attr('fill', 'none')
-            .attr('stroke', 'none');
-        
-        // Add count labels
         enterRows.append('text')
             .attr('class', 'count-label')
             .attr('x', margin.left - 10)
             .attr('text-anchor', 'end')
-            .attr('font-size', `${this.baseFontSize * 0.85}rem`)
-            .attr('fill', '#666')
             .attr('dy', '0.35em');
         
-        // Add bit cells for new rows
         enterRows.each(function(d) {
             const rowGroup = d3.select(this);
             rowGroup.selectAll('.bit-cell')
@@ -555,7 +461,6 @@ class LatticeSimulation {
                 .attr('height', rowHeight);
         });
         
-        // Update selection
         const updateRows = languageRows.merge(enterRows);
         
         updateRows
@@ -564,9 +469,8 @@ class LatticeSimulation {
         updateRows.select('.count-label')
             .text(d => d.count)
             .attr('y', rowHeight / 2)
-            .style('font-weight', d => d.isSelected ? 'bold' : 'normal');
+            .classed('selected', d => d.isSelected);
         
-        // Update bit cells - this is the key fix
         updateRows.each(function(d) {
             const rowGroup = d3.select(this);
             const bitCells = rowGroup.selectAll('.bit-cell')
@@ -582,37 +486,26 @@ class LatticeSimulation {
                 .attr('x', (bitData, i) => margin.left + i * bitWidth)
                 .attr('y', 0)
                 .attr('fill', bitData => bitData.bit === 1 ? bitData.color : '#ffffff00')
-                .attr('stroke', bitData => bitData.isSelected ? '#222' : '#333')
-                .attr('stroke-width', bitData => bitData.isSelected ? 4 : 0.5);
+                .classed('selected', bitData => bitData.isSelected);
         });
         
-        // Exit selection
         languageRows.exit().remove();
     }
     
     renderSelection() {
-        // Update lattice cell strokes
         this.cells
-            .attr('stroke', d => {
+            .classed('selected', d => {
                 const agent = this.lattice[d.x][d.y];
                 const langStr = agent.language.join('');
-                return langStr === this.selectedLanguage ? '#fff' : '#333';
-            })
-            .attr('stroke-width', d => {
-                const agent = this.lattice[d.x][d.y];
-                const langStr = agent.language.join('');
-                return langStr === this.selectedLanguage ? 3 : 0.5;
+                return langStr === this.selectedLanguage;
             });
         
-        // Update heatmap (will be handled in renderHeatmap)
         this.renderHeatmap();
     }
     
     render() {
-        // Update step display
         this.stepDisplay.text(`Step: ${this.step}`);
         
-        // Update cell colors using D3's data join
         this.cells
             .datum((d, i) => {
                 const agent = this.lattice[d.x][d.y];
@@ -624,10 +517,7 @@ class LatticeSimulation {
             })
             .attr('fill', d => d.color);
         
-        // Update heatmap
         this.renderHeatmap();
-        
-        // Update selection highlighting
         this.renderSelection();
     }
     
@@ -659,10 +549,9 @@ class LatticeSimulation {
         this.update();
         this.render();
         
-        // Use setTimeout for controlled speed instead of requestAnimationFrame
         setTimeout(() => {
             this.animationId = requestAnimationFrame(() => this.runLoop());
-        }, 100); // 100ms delay between steps
+        }, 100);
     }
     
     singleStep() {
@@ -681,7 +570,6 @@ class LatticeSimulation {
     }
 }
 
-// Initialize the simulation when the page loads
 document.addEventListener('DOMContentLoaded', () => {
     new LatticeSimulation();
 });

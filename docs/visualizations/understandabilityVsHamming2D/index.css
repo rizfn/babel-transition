@@ -1,0 +1,105 @@
+@import url('https://fonts.googleapis.com/css2?family=Rubik:ital,wght@0,300..900;1,300..900&display=swap');
+
+* {
+    font-family: 'Rubik', sans-serif;
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    background-color: transparent;
+}
+
+.main-container {
+    display: grid;
+    grid-template-columns: 10% 1fr 1fr;
+    height: 100vh;
+    width: 100vw;
+    margin: 0;
+    padding: 0;
+}
+
+.controls-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px;
+}
+
+.step-display {
+    font-size: 1.95rem; /* 1.5 * 1.3 */
+    font-weight: bold;
+}
+
+.control-button {
+    padding: 8px 16px;
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+.parameter-container {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.parameter-label {
+    font-weight: bold;
+    font-size: 1.5rem;
+}
+
+.parameter-input {
+    width: 100%;
+}
+
+.parameter-display {
+    text-align: center;
+    font-size: 1.35rem; /* 1.5 * 0.9 */
+}
+
+.visualization-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px;
+}
+
+.visualization-title {
+    margin: 0 0 10px 0;
+    font-size: 1.8rem; /* 1.5 * 1.2 */
+}
+
+.lattice-cell {
+    stroke: #333;
+    stroke-width: 0.5;
+    cursor: pointer;
+}
+
+.lattice-cell.selected {
+    stroke: #fff;
+    stroke-width: 3;
+}
+
+.language-row {
+    cursor: pointer;
+}
+
+.count-label {
+    font-size: 1.275rem; /* 1.5 * 0.85 */
+    fill: #666;
+}
+
+.count-label.selected {
+    font-weight: bold;
+}
+
+.bit-cell {
+    stroke: #333;
+    stroke-width: 0.5;
+}
+
+.bit-cell.selected {
+    stroke: #222;
+    stroke-width: 4;
+}
