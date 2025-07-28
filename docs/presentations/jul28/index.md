@@ -256,6 +256,11 @@ Mutate the entire lattice
 
 ---
 
+![bg fit](../fig/jul28/population_timeseries_L_256_B_16_g_1_a_0.8_mu_0.0001.png)
+
+
+---
+
 ![bg fit](../fig/jul3/heatmap_sqrtWeightedClusterSize_L_256_B_16_mu_0.001_K_1.png)
 
 ---
