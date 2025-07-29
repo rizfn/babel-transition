@@ -42,36 +42,29 @@ def parse_lattice_line(line):
     lattice_array = np.array(lattice)
     return step, lattice_array
 
-def get_last_line_from_file(filename):
-    """Get the last non-empty line from a file."""
-    with open(filename, 'rb') as f:
-        # Seek to end and work backwards to find last non-empty line
-        f.seek(0, 2)  # Go to end of file
-        file_size = f.tell()
-        
-        if file_size == 0:
-            return None
-            
-        # Read backwards to find the last line
-        f.seek(-1, 2)
+def get_sampled_lines_from_file(filename, sample_interval=100):
+    """Get every nth non-empty line from a file, plus the last line."""
+    with open(filename, 'r', encoding='utf-8') as f:
         lines = []
-        while f.tell() > 0:
-            char = f.read(1)
-            if char == b'\n':
-                if lines:  # We found a complete line
-                    break
-            f.seek(-2, 1)  # Move back 2 positions
-            lines.append(char)
+        all_lines = []
+        for line in f:
+            line = line.strip()
+            if line:
+                all_lines.append(line)
         
-        # Read any remaining content if we reached the beginning
-        if f.tell() == 0:
-            f.seek(0)
-            remaining = f.read().decode('utf-8')
-            return remaining.strip().split('\n')[-1]
+        if not all_lines:
+            return []
         
-        # Decode the line we found
-        last_line = b''.join(reversed(lines)).decode('utf-8').strip()
-        return last_line if last_line else None
+        # Sample every nth line
+        sampled_lines = []
+        for i in range(0, len(all_lines), sample_interval):
+            sampled_lines.append(all_lines[i])
+        
+        # Always include the last line if it wasn't already included
+        if len(all_lines) % sample_interval != 1:  # Last line not already included
+            sampled_lines.append(all_lines[-1])
+        
+        return sampled_lines
 
 def count_ones_in_lattice(lattice):
     """Count the average number of 1s across all bitstrings in the lattice."""
@@ -101,8 +94,8 @@ def get_ones_distribution(lattice):
     
     return np.array(ones_counts)
 
-def load_lattice_data(L, B, gamma):
-    """Load final lattices and compute both average 1s counts and distributions for each alpha-mu combination."""
+def load_lattice_data_sampled_timesteps(L, B, gamma, sample_interval=100):
+    """Load lattices from sampled timesteps and compute average 1s counts for each alpha-mu combination."""
     pattern = os.path.join(os.path.dirname(__file__), f"outputs/latticeTimeseries/rasterscanMu/L_{L}_B_{B}/g_{gamma}_a_*_mu_*.tsv")
     files = glob.glob(pattern)
     
@@ -111,9 +104,10 @@ def load_lattice_data(L, B, gamma):
         return {}, {}
     
     print(f"Found {len(files)} files matching L={L}, B={B}, gamma={gamma}")
+    print(f"Sampling every {sample_interval} timesteps")
     
-    ones_data = {}
-    distribution_data = {}
+    ones_timeseries_data = {}
+    distribution_timeseries_data = {}
     
     for filename in tqdm(files, desc="Processing lattice data"):
         gamma_file, alpha, L_file, B_file, mu = extract_params_from_filename(filename)
@@ -126,36 +120,50 @@ def load_lattice_data(L, B, gamma):
             continue
             
         try:
-            last_line = get_last_line_from_file(filename)
-            if last_line is None:
+            sampled_lines = get_sampled_lines_from_file(filename, sample_interval)
+            if not sampled_lines:
                 continue
                 
-            step, lattice = parse_lattice_line(last_line)
-            if lattice is not None:
-                # Compute average 1s count
-                avg_ones = count_ones_in_lattice(lattice)
-                ones_data[(alpha, mu)] = {
-                    'avg_ones': avg_ones,
-                    'step': step,
+            steps = []
+            avg_ones_timeseries = []
+            ones_distributions = []
+            
+            for line in sampled_lines:
+                step, lattice = parse_lattice_line(line)
+                if lattice is not None:
+                    # Compute average 1s count
+                    avg_ones = count_ones_in_lattice(lattice)
+                    steps.append(step)
+                    avg_ones_timeseries.append(avg_ones)
+                    
+                    # Compute 1s distribution
+                    ones_counts = get_ones_distribution(lattice)
+                    ones_distributions.append(ones_counts)
+            
+            if steps:
+                ones_timeseries_data[(alpha, mu)] = {
+                    'steps': np.array(steps),
+                    'avg_ones_timeseries': np.array(avg_ones_timeseries),
+                    'final_avg_ones': avg_ones_timeseries[-1],
                     'alpha': alpha,
                     'mu': mu
                 }
                 
-                # Compute 1s distribution
-                ones_counts = get_ones_distribution(lattice)
-                distribution_data[(alpha, mu)] = {
-                    'ones_counts': ones_counts,
-                    'step': step,
+                distribution_timeseries_data[(alpha, mu)] = {
+                    'steps': np.array(steps),
+                    'ones_distributions': ones_distributions,
+                    'final_ones_counts': ones_distributions[-1],
                     'alpha': alpha,
                     'mu': mu
                 }
+                
         except Exception as e:
             print(f"Error processing {filename}: {e}")
             continue
     
-    return ones_data, distribution_data
+    return ones_timeseries_data, distribution_timeseries_data
 
-def create_ones_heatmap(ones_data, L, B, gamma):
+def create_ones_heatmap(ones_data, L, B, gamma, use_final=True):
     """Create a heatmap of average number of 1s organized by alpha and mu."""
     if not ones_data:
         print("No data to plot")
@@ -174,7 +182,11 @@ def create_ones_heatmap(ones_data, L, B, gamma):
     for i, alpha in enumerate(alphas):
         for j, mu in enumerate(mus):
             if (alpha, mu) in ones_data:
-                heatmap_data[i, j] = ones_data[(alpha, mu)]['avg_ones']
+                if use_final:
+                    heatmap_data[i, j] = ones_data[(alpha, mu)]['final_avg_ones']
+                else:
+                    # Use mean across all timesteps
+                    heatmap_data[i, j] = np.mean(ones_data[(alpha, mu)]['avg_ones_timeseries'])
     
     # Create the heatmap
     fig, ax = plt.subplots(figsize=(10, 8))
@@ -208,19 +220,20 @@ def create_ones_heatmap(ones_data, L, B, gamma):
     # Labels and title
     ax.set_xlabel('Mu (Mutation Rate)', fontsize=12)
     ax.set_ylabel('Alpha (Local Interaction Strength)', fontsize=12)
-    ax.set_title(f'Average Number of 1s per Bitstring\n(L={L}, B={B}, γ={gamma})', fontsize=14)
+    title_suffix = "Final State" if use_final else "Time-Averaged"
+    ax.set_title(f'Average Number of 1s per Bitstring ({title_suffix})\n(L={L}, B={B}, γ={gamma})', fontsize=14)
     
     plt.tight_layout()
     
-    # Save the plot
-    output_dir = "src/understandabilityVsHamming2D/stochasticCommutable/plots/ones_fraction"
-    os.makedirs(output_dir, exist_ok=True)
-    fname = f"{output_dir}/ones_heatmap_L_{L}_B_{B}_gamma_{gamma}.png"
+    # Save the plot in the same directory as the script
+    script_dir = os.path.dirname(__file__)
+    suffix = "final" if use_final else "timeavg"
+    fname = f"{script_dir}/plots/ones_fraction/ones_heatmap_{suffix}_L_{L}_B_{B}_gamma_{gamma}.png"
     plt.savefig(fname, dpi=300, bbox_inches='tight')
     
     print(f"Heatmap saved to: {fname}")
 
-def create_distribution_grid(distribution_data, L, B, gamma):
+def create_distribution_grid(distribution_data, L, B, gamma, use_final=True):
     """Create a grid plot of 1s distributions organized by mu (x-axis) and alpha (y-axis)."""
     if not distribution_data:
         print("No distribution data to plot")
@@ -254,8 +267,12 @@ def create_distribution_grid(distribution_data, L, B, gamma):
             
             if (alpha, mu) in distribution_data:
                 data = distribution_data[(alpha, mu)]
-                ones_counts = data['ones_counts']
-                step = data['step']
+                
+                if use_final:
+                    ones_counts = data['final_ones_counts']
+                else:
+                    # Concatenate all distributions across time
+                    ones_counts = np.concatenate(data['ones_distributions'])
                 
                 # Create histogram
                 bins = np.arange(0, B+2) - 0.5  # Bins centered on integers
@@ -295,7 +312,8 @@ def create_distribution_grid(distribution_data, L, B, gamma):
                 ax.set_yticks([])
     
     # Add overall labels
-    fig.suptitle(f'Distribution of 1s in Bitstrings: Alpha vs Mu Raster\n(L={L}, B={B}, γ={gamma})', 
+    title_suffix = "Final State" if use_final else "Sampled Time Steps"
+    fig.suptitle(f'Distribution of 1s in Bitstrings ({title_suffix}): Alpha vs Mu Raster\n(L={L}, B={B}, γ={gamma})', 
                 fontsize=16)
     fig.text(0.5, 0.02, 'Mu (Mutation Rate)', ha='center', fontsize=14)
     fig.text(0.02, 0.5, 'Alpha (Local Interaction Strength)', va='center', 
@@ -303,34 +321,91 @@ def create_distribution_grid(distribution_data, L, B, gamma):
     
     plt.tight_layout(rect=[0.03, 0.03, 1, 0.95])
     
-    # Save the plot
-    output_dir = "src/understandabilityVsHamming2D/stochasticCommutable/plots/ones_fraction"
-    os.makedirs(output_dir, exist_ok=True)
-    fname = f"{output_dir}/ones_distribution_grid_L_{L}_B_{B}_gamma_{gamma}.png"
+    # Save the plot in the same directory as the script
+    script_dir = os.path.dirname(__file__)
+    suffix = "final" if use_final else "sampled"
+    fname = f"{script_dir}/plots/ones_fraction/ones_distribution_grid_{suffix}_L_{L}_B_{B}_gamma_{gamma}.png"
     plt.savefig(fname, dpi=300, bbox_inches='tight')
     
     print(f"Distribution grid saved to: {fname}")
 
+def create_timeseries_plots(ones_timeseries_data, L, B, gamma):
+    """Create plots showing the evolution of average 1s over time for different parameter combinations."""
+    if not ones_timeseries_data:
+        print("No timeseries data to plot")
+        return
+    
+    # Get unique alpha and mu values
+    alphas = sorted(set(key[0] for key in ones_timeseries_data.keys()))
+    mus = sorted(set(key[1] for key in ones_timeseries_data.keys()))
+    
+    # Create subplots for different alpha values
+    fig, axes = plt.subplots(len(alphas), 1, figsize=(12, 4*len(alphas)), sharex=True)
+    if len(alphas) == 1:
+        axes = [axes]
+    
+    colors = plt.cm.viridis(np.linspace(0, 1, len(mus)))
+    
+    for i, alpha in enumerate(reversed(alphas)):  # Highest alpha at top
+        ax = axes[i]
+        
+        for j, mu in enumerate(mus):
+            if (alpha, mu) in ones_timeseries_data:
+                data = ones_timeseries_data[(alpha, mu)]
+                steps = data['steps']
+                avg_ones = data['avg_ones_timeseries']
+                
+                ax.plot(steps, avg_ones, color=colors[j], label=f'μ={mu:.4f}', linewidth=1.5, marker='o', markersize=3)
+        
+        ax.set_ylabel('Average 1s per Bitstring', fontsize=10)
+        ax.set_title(f'α = {alpha}', fontsize=12)
+        ax.grid(True, alpha=0.3)
+        ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+        ax.set_ylim(0, 1)
+    
+    axes[-1].set_xlabel('Time Step', fontsize=12)
+    fig.suptitle(f'Evolution of Average 1s per Bitstring (Sampled)\n(L={L}, B={B}, γ={gamma})', fontsize=16)
+    
+    plt.tight_layout()
+    
+    # Save the plot in the same directory as the script
+    script_dir = os.path.dirname(__file__)
+    fname = f"{script_dir}/plots/ones_fraction/ones_timeseries_sampled_L_{L}_B_{B}_gamma_{gamma}.png"
+    plt.savefig(fname, dpi=300, bbox_inches='tight')
+    
+    print(f"Timeseries plot saved to: {fname}")
 
-def main(L=256, B=16, gamma=1):
-    """Main function that generates both visualizations."""
+def main(L=256, B=16, gamma=1, sample_interval=100):
+    """Main function that generates visualizations using sampled timesteps."""
     print(f"Loading lattice data for parameters: L={L}, B={B}, gamma={gamma}")
+    print(f"Sampling every {sample_interval} timesteps")
     
-    # Load data and compute both average 1s counts and distributions
-    ones_data, distribution_data = load_lattice_data(L, B, gamma)
+    # Load data from sampled timesteps
+    ones_timeseries_data, distribution_timeseries_data = load_lattice_data_sampled_timesteps(L, B, gamma, sample_interval)
     
-    if not ones_data and not distribution_data:
+    if not ones_timeseries_data and not distribution_timeseries_data:
         print("No valid data found.")
         return
     
-    print(f"Successfully processed {len(ones_data)} parameter combinations")
+    print(f"Successfully processed {len(ones_timeseries_data)} parameter combinations")
     
-    # Create both visualizations
-    if ones_data:
-        create_ones_heatmap(ones_data, L, B, gamma)
+    # Create visualizations
+    if ones_timeseries_data:
+        # Create heatmap using final state
+        create_ones_heatmap(ones_timeseries_data, L, B, gamma, use_final=True)
+        
+        # Create heatmap using time-averaged values
+        create_ones_heatmap(ones_timeseries_data, L, B, gamma, use_final=False)
+        
+        # Create timeseries plots
+        create_timeseries_plots(ones_timeseries_data, L, B, gamma)
     
-    if distribution_data:
-        create_distribution_grid(distribution_data, L, B, gamma)
+    if distribution_timeseries_data:
+        # Create distribution grid using final state
+        create_distribution_grid(distribution_timeseries_data, L, B, gamma, use_final=True)
+        
+        # Create distribution grid using sampled timesteps
+        create_distribution_grid(distribution_timeseries_data, L, B, gamma, use_final=False)
 
 if __name__ == "__main__":
-    main(L=256, B=16, gamma=1)
+    main(L=256, B=16, gamma=1, sample_interval=100)
