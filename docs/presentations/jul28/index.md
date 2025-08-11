@@ -54,7 +54,7 @@ Is that  really true?
 
 $\\$
 
-English speakers can't learn Japanese!
+Why isn't there a common language?
 
 $\\$
 
@@ -127,7 +127,9 @@ $\mathcal{U}(\vec{c}_1, \vec{c}_2) = \sum\mathrm{AND}(\vec{c}_1, \vec{c}_2) = 1$
 $\\$
 
 - Start with agents, each speaks their own language
+
 - Agents compete and gain fitness
+
 - Fittest agents reproduce
 
 ---
@@ -146,9 +148,9 @@ $$ \mathcal{F_A} =  \underbrace{\gamma \,\frac{d_\mathcal{H}(\vec{c}_1,\vec{c}_2
 
 ### Exact evolutionary details:
 
-- Each generation, each agent each other agent
+- Each generation, each agent competes with every other agent, and gains fitness
 
-- Average fitness is calculated.
+- Total fitness is calculated.
 
 - Top 50% of agents reproduce.
 
@@ -180,12 +182,6 @@ $B$ : Length of the bit string = 16
 
 $\mu$ : Mutation rate = 0.01
 
-
----
-
-### Number of communicable people
-
-![width:570px](../fig/jun10/communicable_hist_g_1_a_0_N_1000_L_16_mu_0.01_thresh_1_gen_1000.png)![width:570px](../fig/jun10/communicable_hist_g_1_a_1_N_1000_L_16_mu_0.01_thresh_1_gen_1000.png)
 
 ---
 
@@ -231,9 +227,10 @@ Each agent plays 4 local games and $L^2$ global games
 
 ---
 
+![bg fit right:25%](../fig/jul28/reproduction_schematic.png)
+
 ### Reproduction
 
-$\\$
 
 Choose a random site to reproduce
 
