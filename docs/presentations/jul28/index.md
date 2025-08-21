@@ -117,6 +117,21 @@ $$\vec{c}_2 = \left[1,1,0,1,0,0,0 \right]$$
 
 $\mathcal{U}(\vec{c}_1, \vec{c}_2) = \sum\mathrm{AND}(\vec{c}_1, \vec{c}_2) = 1$
 
+---
+
+### Discommunication $d_H$
+
+$\\$
+
+$$\vec{c}_1 = \left[0,1,0,0,0,1,0 \right]$$
+
+$$\vec{c}_2 = \left[1,1,0,1,0,0,0 \right]$$
+
+
+Agents want to be *different* from others.
+
+$d_H(\vec{c}_1, \vec{c}_2) = \sum\mathrm{XOR}(\vec{c}_1, \vec{c}_2) = 3$
+
 
 ---
 
