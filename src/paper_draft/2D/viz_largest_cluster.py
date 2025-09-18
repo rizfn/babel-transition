@@ -133,36 +133,39 @@ def create_order_parameter_heatmap(aggregated_data, L, B, mu):
         order_grid[alpha_idx, gamma_idx] = order_param
         error_grid[alpha_idx, gamma_idx] = std_error
     
-    # Create the heatmap with red-blue divergent colormap
-    fig, ax = plt.subplots(figsize=(10, 8))
+    # Create the heatmap with red-blue divergent colormap and transparent face color
+    fig, ax = plt.subplots(figsize=(10, 8), facecolor='none')
+    ax.patch.set_facecolor('none')
     
     im = ax.imshow(order_grid, cmap='RdBu_r', aspect='auto', vmin=0, vmax=1,
                    extent=[gammas.min()-0.1, gammas.max()+0.1, 
                           alphas.min()-0.1, alphas.max()+0.1])
     
-    # Set ticks and labels
-    ax.set_xticks(gammas)
-    ax.set_yticks(alphas_reversed)
-    ax.set_xticklabels([f'{gamma}' for gamma in gammas], fontsize=12)
-    ax.set_yticklabels([f'{alpha}' for alpha in alphas_reversed], fontsize=12)
+    # Set ticks and labels - only show min and max
+    ax.set_xticks([gammas.min(), gammas.max()])
+    ax.set_yticks([alphas.min(), alphas.max()])
+    ax.set_xticklabels([f'{gammas.min()}', f'{gammas.max()}'], fontsize=30)
+    ax.set_yticklabels([f'{alphas.min()}', f'{alphas.max()}'], fontsize=30)
     
-    # Customize the plot
+    # Customize the plot with closer labels
     cbar = plt.colorbar(im, ax=ax)
-    cbar.set_label('Largest Cluster Fraction', rotation=270, labelpad=20, fontsize=14)
+    cbar.set_label('Largest Cluster Fraction', rotation=270, labelpad=0, fontsize=30)
+    # Set colorbar ticks to only show min and max
+    cbar.set_ticks([0, 1])
+    cbar.set_ticklabels(['0.0', '1.0'], fontsize=30)
     
-    ax.set_xlabel('Global Disalignment Strength (γ)', fontsize=16)
-    ax.set_ylabel('Local Alignment Strength (α)', fontsize=16)
-    ax.set_title(f'Order Parameter vs α and γ (L={L}, B={B}, μ={mu})', fontsize=18)
+    ax.set_xlabel('γ', fontsize=40, labelpad=-25)
+    ax.set_ylabel('α', fontsize=40, labelpad=-35)
     
     # Add grid for clarity
     ax.grid(True, alpha=0.3)
     
-    # Save the plot
+    # Save the plot with transparent background
     output_dir = "src/paper_draft/2D/plots/rasterscans"
     os.makedirs(output_dir, exist_ok=True)
-    fname = f"{output_dir}/largest_cluster_heatmap_L_{L}_B_{B}_mu_{mu}.pdf"
+    fname = f"{output_dir}/largest_cluster_heatmap_L_{L}_B_{B}_mu_{mu}.svg"
     plt.tight_layout()
-    plt.savefig(fname, dpi=300, bbox_inches='tight')
+    plt.savefig(fname, dpi=300, bbox_inches='tight', facecolor='none', transparent=True)
     print(f"Plot saved to: {fname}")
 
 def main_largest_cluster_alpha_gamma(L=256, B=16, mu=0.0001):

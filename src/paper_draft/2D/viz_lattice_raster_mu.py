@@ -164,8 +164,8 @@ def create_lattice_alpha_mu_raster_plot(lattice_data, L, B, gamma):
         rainbow_colors = get_rainbow_color_list(n_colors=65536, seed=42)
 
     # Use standard orientation: alpha (y, rows), mu (x, columns)
-    fig, axes = plt.subplots(len(alphas), len(mus), figsize=(2.2*len(mus), 2.2*len(alphas)), squeeze=False)
-    fig.subplots_adjust(left=0.12, right=0.98, bottom=0.12, top=0.98, wspace=0.08, hspace=0.08)
+    fig, axes = plt.subplots(len(alphas), len(mus), figsize=(2.2*len(mus), 2.2*len(alphas)), squeeze=False, facecolor='none')
+    fig.subplots_adjust(left=0.08, right=0.98, bottom=0.08, top=0.96, wspace=0.08, hspace=0.08)
 
     for i, alpha in enumerate(alphas):
         for j, mu in enumerate(mus):
@@ -187,41 +187,29 @@ def create_lattice_alpha_mu_raster_plot(lattice_data, L, B, gamma):
                         rgb_img[x, y] = bitstring_to_color(lattice[x, y], color_map=color_map, rainbow_colors=rainbow_colors)
                 ax.imshow(rgb_img, interpolation='nearest', aspect='auto')
             else:
-                ax.text(0.5, 0.5, 'No Data', ha='center', va='center', transform=ax.transAxes, fontsize=24)
+                ax.text(0.5, 0.5, 'No Data', ha='center', va='center', transform=ax.transAxes, fontsize=18)
             ax.set_xticks([])
             ax.set_yticks([])
 
-    # Set axis labels and ticks
-    # X axis: mu
-    plt.xticks(
-        ticks=[i for i in range(len(mus))],
-        labels=[f'{mu:.1e}' if mu < 0.001 else f'{mu:.3f}' for mu in mus],
-        fontsize=24
-    )
-    fig.supxlabel('Mutation Rate (μ)', fontsize=52)
-    # Y axis: alpha
-    plt.yticks(
-        ticks=[i for i in range(len(alphas))],
-        labels=[f'{alpha}' for alpha in alphas],
-        fontsize=24
-    )
-    fig.supylabel('Local Interaction Strength (α)', fontsize=52)
+    # Set super labels with smaller fonts and closer positioning
+    fig.supxlabel('Mutation Rate (μ)', fontsize=28, y=0.02)
+    fig.supylabel('Local Alignment Strength (α)', fontsize=28, x=0.02)
 
-    # Set ticks only on outer axes
+    # Set ticks only on outer axes with smaller fonts
     for i, ax_row in enumerate(axes):
         for j, ax in enumerate(ax_row):
             if i == len(alphas) - 1:
-                ax.set_xlabel(f'{mus[j]:.1e}' if mus[j] < 0.001 else f'{mus[j]:.3f}', fontsize=24)
+                ax.set_xlabel(f'{mus[j]:.1e}' if mus[j] < 0.001 else f'{mus[j]:.3f}', fontsize=18, labelpad=2)
             if j == 0:
-                ax.set_ylabel(f'{alphas[i]}', fontsize=24)
+                ax.set_ylabel(f'{alphas[i]}', fontsize=18, labelpad=2)
             # Hide all ticks
             ax.set_xticks([])
             ax.set_yticks([])
 
     output_dir = "src/paper_draft/2D/plots/rasterscans"
     os.makedirs(output_dir, exist_ok=True)
-    fname = f"{output_dir}/alpha_mu_raster_lattices_L_{L}_B_{B}_gamma_{gamma}.pdf"
-    plt.savefig(fname, dpi=300, bbox_inches='tight')
+    fname = f"{output_dir}/alpha_mu_raster_lattices_L_{L}_B_{B}_gamma_{gamma}.svg"
+    plt.savefig(fname, dpi=300, bbox_inches='tight', facecolor='none', transparent=True)
     print(f"Plot saved to: {fname}")
 
 def main_alpha_mu_raster(L=256, B=16, gamma=1):
