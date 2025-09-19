@@ -14,8 +14,8 @@ fi
 echo "Total CPUs: $TOTAL_CPUS, Running with max $MAX_PARALLEL parallel jobs (leaving $CPUS_FREE free)"
 
 # Parameter ranges - alpha varies and gamma is fixed
-ALPHA_VALUES=(0.4 0.8 1.2)
-MU_VALUES=(0.00001 0.0001 0.001 0.005)
+ALPHA_VALUES=(0.2 0.4 0.6 0.8 1.0 1.2)
+MU_VALUES=(0.00001)
 
 # Fixed parameters (adjusted for populationTimeseries)
 L=256

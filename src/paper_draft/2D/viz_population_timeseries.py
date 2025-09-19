@@ -116,23 +116,45 @@ def plot_population_timeseries(L, B, gamma, alpha, mu, max_langs=20):
     # Get top languages by total count
     top_langs = [bitstring for bitstring, _ in lang_totals.most_common(max_langs)]
 
-    fig, ax = plt.subplots(figsize=(12, 8))
-    colors = plt.cm.tab20(np.linspace(0, 1, len(top_langs)))
+    # Create shuffled rainbow colors
+    np.random.seed(53)  # For reproducible colors
+    cmap = plt.cm.rainbow
+    colors = [cmap(i / (len(top_langs) - 1))[:3] for i in range(len(top_langs))]
+    np.random.shuffle(colors)
+    np.random.seed(None)  # Reset seed
+
+    fig, ax = plt.subplots(figsize=(12, 4), facecolor='none')
+    ax.patch.set_facecolor('none')
+    
+    lattice_size = L * L
     
     for i, bitstring in enumerate(top_langs):
-        pop = [populations[step].get(bitstring, 0) for step in timesteps]
-        ax.plot(timesteps, pop, label=bitstring, color=colors[i % len(colors)], linewidth=2)
+        pop = [populations[step].get(bitstring, 0) / lattice_size for step in timesteps]
+        ax.plot(timesteps, pop, color=colors[i], linewidth=2)
 
-    ax.set_xlabel('Time Step')
-    ax.set_ylabel('Population Count')
-    ax.set_title(f'Language Population Timeseries\nL={L}, B={B}, γ={gamma}, α={alpha}, μ={mu}')
-    ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left', fontsize='small')
-    ax.grid(True, alpha=0.3)
+    ax.set_xlabel('Time', fontsize=32, labelpad=-20)
+    ax.set_ylabel('Population', fontsize=32, labelpad=-30)
+    
+    # Get max normalized population value for y-axis and round to 2 significant figures
+    max_pop_raw = max(max(populations[step].values()) for step in timesteps if populations[step]) / lattice_size
+    # Round to 2 significant figures
+    max_pop = round(max_pop_raw, -int(np.floor(np.log10(abs(max_pop_raw)))) + 1)
+    
+    # Enable grid with both major and minor ticks
+    ax.grid(True, which='both', alpha=0.3)
+    ax.minorticks_on()
+    
+    # Set displayed ticks to only min and max values (this will override the minor ticks)
+    ax.set_xticks([min(timesteps), max(timesteps)])
+    ax.set_yticks([0, max_pop])
+    
+    # Set tick label font size
+    ax.tick_params(axis='both', which='major', labelsize=24)
 
     output_dir = f"src/paper_draft/2D/plots/populationTimeseries"
     os.makedirs(output_dir, exist_ok=True)
-    fname = f"{output_dir}/population_timeseries_L_{L}_B_{B}_g_{gamma}_a_{alpha}_mu_{mu}.png"
-    plt.savefig(fname, dpi=300, bbox_inches='tight')
+    fname = f"{output_dir}/population_timeseries_L_{L}_B_{B}_g_{gamma}_a_{alpha}_mu_{mu}.svg"
+    plt.savefig(fname, dpi=300, format='svg', bbox_inches='tight', facecolor='none', edgecolor='none', transparent=True)
     plt.tight_layout()
     print(f"Plot saved to: {fname}")
 
@@ -140,8 +162,8 @@ def main():
     L = 256
     B = 16
     gamma = 1
-    alpha = 0
-    mu = 0.0001
+    alpha = 0.4
+    mu = 1e-05
     max_langs = 40
     
     plot_population_timeseries(L, B, gamma, alpha, mu, max_langs)
