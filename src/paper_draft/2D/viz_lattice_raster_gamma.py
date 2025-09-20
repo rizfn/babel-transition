@@ -192,14 +192,14 @@ def create_lattice_alpha_gamma_raster_plot(lattice_data, L, B, mu):
             ax.set_yticks([])
 
     # Set super labels with smaller fonts and closer positioning
-    fig.supxlabel('Global Disalignment Strength (γ)', fontsize=28, y=0.03)
+    fig.supxlabel('Global Disalignment Strength (γ)', fontsize=28, y=0.025)
     fig.supylabel('Local Alignment Strength (α)', fontsize=28, x=0.02)
 
     # Set ticks only on outer axes with smaller fonts
     for i, ax_row in enumerate(axes):
         for j, ax in enumerate(ax_row):
             if i == len(alphas) - 1:
-                ax.set_xlabel(f'{gammas[j]}', fontsize=18, labelpad=2)
+                ax.set_xlabel(f'{gammas[j]}', fontsize=18, labelpad=3)
             if j == 0:
                 ax.set_ylabel(f'{alphas[i]}', fontsize=18, labelpad=2)
             # Hide all ticks

@@ -187,21 +187,21 @@ def create_lattice_alpha_mu_raster_plot(lattice_data, L, B, gamma):
                         rgb_img[x, y] = bitstring_to_color(lattice[x, y], color_map=color_map, rainbow_colors=rainbow_colors)
                 ax.imshow(rgb_img, interpolation='nearest', aspect='auto')
             else:
-                ax.text(0.5, 0.5, 'No Data', ha='center', va='center', transform=ax.transAxes, fontsize=18)
+                ax.text(0.5, 0.5, 'No Data', ha='center', va='center', transform=ax.transAxes, fontsize=24)
             ax.set_xticks([])
             ax.set_yticks([])
 
     # Set super labels with smaller fonts and closer positioning
-    fig.supxlabel('Mutation Rate (μ)', fontsize=28, y=0.02)
-    fig.supylabel('Local Alignment Strength (α)', fontsize=28, x=0.02)
+    fig.supxlabel('Mutation Rate (μ)', fontsize=40, y=0.02)
+    fig.supylabel('Local Alignment Strength (α)', fontsize=40, x=0.015)
 
     # Set ticks only on outer axes with smaller fonts
     for i, ax_row in enumerate(axes):
         for j, ax in enumerate(ax_row):
             if i == len(alphas) - 1:
-                ax.set_xlabel(f'{mus[j]:.1e}' if mus[j] < 0.001 else f'{mus[j]:.3f}', fontsize=18, labelpad=2)
+                ax.set_xlabel(f'{mus[j]:.1e}' if mus[j] < 0.001 else f'{mus[j]:.3f}', fontsize=24, labelpad=5)
             if j == 0:
-                ax.set_ylabel(f'{alphas[i]}', fontsize=18, labelpad=2)
+                ax.set_ylabel(f'{alphas[i]}', fontsize=24, labelpad=2)
             # Hide all ticks
             ax.set_xticks([])
             ax.set_yticks([])
