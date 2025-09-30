@@ -146,6 +146,17 @@ def plot_population_timeseries(L, B, gamma, alpha, mu, max_langs=20):
     
     # Set displayed ticks to only min and max values (this will override the minor ticks)
     ax.set_xticks([min(timesteps), max(timesteps)])
+    # Round the label for the max x-tick to 2 significant figures, but keep the tick at the actual max value
+    min_tick = min(timesteps)
+    max_tick = max(timesteps)
+    # Format max_tick label to 2 significant figures
+    if max_tick > 0:
+        max_tick_label = f"{round(max_tick, -int(np.floor(np.log10(abs(max_tick)))) + 1):,}"
+    else:
+        max_tick_label = str(max_tick)
+    # Set custom tick labels
+    ax.set_xticklabels([f"{min_tick:,}", max_tick_label])
+
     ax.set_yticks([0, max_pop])
     
     # Set tick label font size
