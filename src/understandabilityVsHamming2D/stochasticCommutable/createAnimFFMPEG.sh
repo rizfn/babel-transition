@@ -3,10 +3,10 @@
 # ---- Define your parameters here ----
 L=256
 gamma=1
-alpha=0.8
+alpha=1
 B=16
-mu=0.005
-subdir="long"  # or "rasterscanMu"
+mu=0
+subdir="loaded"  # "long"  # or "rasterscanMu"
 
 framerate=20  # Frames per second for the animation
 # -------------------------------------

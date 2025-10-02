@@ -161,4 +161,5 @@ if __name__ == "__main__":
     parser.add_argument("--subdir", type=str, default="long", help="Subdirectory (e.g., 'long', 'rasterscanMu')")
     args = parser.parse_args()
 
-    process_lattice_timeseries(args.L, args.B, args.gamma, args.alpha, args.mu, args.subdir)
+    # process_lattice_timeseries(args.L, args.B, args.gamma, args.alpha, args.mu, args.subdir)
+    process_lattice_timeseries(256, 16, 1, 1, 0, 'loaded')
