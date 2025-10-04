@@ -273,7 +273,10 @@ def _plot_single_seed(L, B, seed):
         
         # Only add ylabel to the leftmost plot (no xlabel)
         if idx == 0:
-            ax.set_ylabel('Time', fontsize=32)
+            ax.set_ylabel('Time', fontsize=32, labelpad=-60)
+            # Add y-tick labels for min and max timesteps, formatted
+            ax.set_yticks([0, n_timesteps-1])
+            ax.set_yticklabels(['0', '5.0e6'], fontsize=28)
         
         # Make subplot background transparent
         ax.patch.set_facecolor('none')

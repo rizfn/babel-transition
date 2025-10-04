@@ -276,7 +276,7 @@ int main(int argc, char *argv[])
 
     std::string exeDir = std::filesystem::path(argv[0]).parent_path().string();
     std::ostringstream fname;
-    fname << exeDir << "/outputs/rasterscan/L_" << L << "_B_" << B << "/g_" << gamma << "_a_" << alpha << "_mu_" << mu << ".tsv";
+    fname << exeDir << "/outputs/columnScan/L_" << L << "_B_" << B << "/g_" << gamma << "_a_" << alpha << "_mu_" << mu << ".tsv";
 
     run(L, B, gamma, alpha, mu, steps, steps_to_record, recording_skip, fname.str());
 

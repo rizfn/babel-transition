@@ -221,5 +221,103 @@ def main_alpha_gamma_raster(L=256, B=16, mu=0.0001):
     print(f"Successfully loaded {len(lattice_data)} lattices")
     create_lattice_alpha_gamma_raster_plot(lattice_data, L, B, mu)
 
+
+def load_final_lattices_column_scan(L, B, mu, gamma=1.0, columnscan_dir=None):
+    """Load the final lattice from each file in columnScan directory for fixed gamma, varying alpha."""
+    if columnscan_dir is None:
+        columnscan_dir = os.path.join(os.path.dirname(__file__), f"outputs/columnScan/L_{L}_B_{B}")
+    pattern = os.path.join(columnscan_dir, f"g_{gamma}_a_*_mu_{mu}.tsv")
+    files = glob.glob(pattern)
+    if not files:
+        print(f"No files found with pattern: {pattern}")
+        return {}
+    print(f"Found {len(files)} files in columnScan/L_{L}_B_{B} folder matching mu={mu}, gamma={gamma}")
+    lattice_data = {}
+    for filename in tqdm(files, desc="Loading final lattices (columnScan)"):
+        gamma_f, alpha, mu_file = extract_params_from_filename(filename)
+        if gamma_f is None or alpha is None or mu_file is None:
+            continue
+        if mu_file != mu or gamma_f != gamma:
+            continue
+        try:
+            last_line = get_last_line_from_file(filename)
+            if last_line is None:
+                continue
+            step, lattice = parse_lattice_line(last_line)
+            if lattice is not None:
+                lattice_data[alpha] = {
+                    'lattice': lattice,
+                    'step': step,
+                    'L': L,
+                    'B': B,
+                    'gamma': gamma_f,
+                    'alpha': alpha,
+                    'mu': mu_file
+                }
+        except Exception as e:
+            print(f"Error processing {filename}: {e}")
+            continue
+    return lattice_data
+
+def create_lattice_column_scan_plot(lattice_data, L, B, mu, gamma):
+    """Create a single-row plot of lattices for increasing alpha (left to right), with alpha labeled below each plot."""
+    if not lattice_data:
+        print("No lattice data to plot (columnScan)")
+        return
+    alphas = sorted(lattice_data.keys())
+    color_map = None
+    rainbow_colors = None
+    if B > 4 and B <= 16:
+        color_map = create_bitstring_color_map(B)
+    if B > 16:
+        rainbow_colors = get_rainbow_color_list(n_colors=65536, seed=42)
+
+    fig, axes = plt.subplots(1, len(alphas), figsize=(2.2*len(alphas), 2.2), squeeze=False, facecolor='none')
+    fig.subplots_adjust(left=0.08, right=0.98, bottom=0.18, top=0.96, wspace=0.08)
+
+    for j, alpha in enumerate(alphas):
+        ax = axes[0][j]
+        ax.set_facecolor('white')
+        for spine in ax.spines.values():
+            spine.set_edgecolor('black')
+            spine.set_linewidth(0.7)
+        ax.patch.set_edgecolor('black')
+        ax.patch.set_linewidth(0.7)
+        data = lattice_data[alpha]
+        lattice = data['lattice']
+        L_current = data['L']
+        rgb_img = np.zeros((L_current, L_current, 3))
+        for x in range(L_current):
+            for y in range(L_current):
+                rgb_img[x, y] = bitstring_to_color(lattice[x, y], color_map=color_map, rainbow_colors=rainbow_colors)
+        ax.imshow(rgb_img, interpolation='nearest', aspect='auto')
+        ax.set_xticks([])
+        ax.set_yticks([])
+        # Label alpha below each plot
+        ax.set_xlabel(f"{alpha}", fontsize=22, labelpad=4)
+
+    # Remove y-labels and ticks
+    for ax in axes[0]:
+        ax.set_yticks([])
+        ax.set_ylabel("")
+
+    # Set a supertitle or x-label if desired
+    fig.supxlabel('Local Alignment Strength (α)', fontsize=24, y=-0.15)
+    output_dir = "src/paper_draft/2D/plots/columnScan"
+    os.makedirs(output_dir, exist_ok=True)
+    fname = f"{output_dir}/columnScan_lattices_L_{L}_B_{B}_mu_{mu}_gamma_{gamma}.svg"
+    plt.savefig(fname, dpi=300, bbox_inches='tight', facecolor='none', transparent=True)
+    print(f"Plot saved to: {fname}")
+
+def main_column_scan(L=256, B=16, mu=0.0001, gamma=1.0):
+    print(f"Looking for files with parameters: L={L}, B={B}, mu={mu}, gamma={gamma} in columnScan folder")
+    lattice_data = load_final_lattices_column_scan(L, B, mu, gamma)
+    if not lattice_data:
+        print("No valid lattice data found (columnScan).")
+        return
+    print(f"Successfully loaded {len(lattice_data)} lattices")
+    create_lattice_column_scan_plot(lattice_data, L, B, mu, gamma)
+
 if __name__ == "__main__":
-    main_alpha_gamma_raster(L=256, B=16, mu=0.0001)
+    # main_alpha_gamma_raster(L=256, B=16, mu=0.0001)
+    main_column_scan(L=256, B=16, mu=0.0001, gamma=1)
