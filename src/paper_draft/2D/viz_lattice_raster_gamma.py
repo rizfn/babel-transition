@@ -293,8 +293,8 @@ def create_lattice_column_scan_plot(lattice_data, L, B, mu, gamma):
         ax.imshow(rgb_img, interpolation='nearest', aspect='auto')
         ax.set_xticks([])
         ax.set_yticks([])
-        # Label alpha below each plot
-        ax.set_xlabel(f"{alpha}", fontsize=22, labelpad=4)
+        # Label alpha above each plot
+        ax.set_title(f"α={alpha}", fontsize=18, pad=10)
 
     # Remove y-labels and ticks
     for ax in axes[0]:
@@ -302,7 +302,7 @@ def create_lattice_column_scan_plot(lattice_data, L, B, mu, gamma):
         ax.set_ylabel("")
 
     # Set a supertitle or x-label if desired
-    fig.supxlabel('Local Alignment Strength (α)', fontsize=24, y=-0.15)
+    # fig.supxlabel('Local Alignment Strength (α)', fontsize=18, y=-0.15)
     output_dir = "src/paper_draft/2D/plots/columnScan"
     os.makedirs(output_dir, exist_ok=True)
     fname = f"{output_dir}/columnScan_lattices_L_{L}_B_{B}_mu_{mu}_gamma_{gamma}.svg"
