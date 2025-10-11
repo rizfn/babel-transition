@@ -4,12 +4,12 @@ The simulations are evolutionary algorithms. Typically, we have $N$ agents who e
 
 A common theme is that agents are penalized for speaking the same language, with a term depending on the hamming distance between the languages, $d_\mathcal{H}\left(\vec{c}_A, \vec{c}_B\right)$
 
-There are a ton of models here. Most failed. A few were interesting, and we focused on them. Namely,
+There are a ton of models here. Most failed. A few were interesting, and we focused on them. The final one that we're sticking with (for now) is
 
-[Understandability Vs Hamming](./understandabilityVsHamming/)
+[Understandability Vs Hamming 2D: Stochastic Commutable](./understandabilityVsHamming2D/stochasticCommutable)
 
-[Understandability Vs Hamming 2D](./understandabilityVsHamming2D/)
-
-Both follow
+Which follows
 
 $$ F = \alpha \left( \vec{c}_A \cdot \vec{c}_B \right) + \gamma \cdot d_\mathcal{H}\left(\vec{c}_A, \vec{c}_B\right)$$
+
+For a more concise directory (where most things in it are related to the paper) take a look at [`paper_draft`](./paper_draft/), which was used to generate the figures.
