@@ -180,15 +180,17 @@ $\\$
 
 $\alpha$ : Communicative bonus
 
-$\gamma$ : Discommunication bonus
 
 $\\$
+
+$\gamma$ : Discommunication bonus = 1
+
+$\mu$ : Mutation rate = 0.001
 
 $L$ : System size = 256
 
 $B$ : Length of the bit string = 16
 
-$\mu$ : Mutation rate = 0.001
 
 
 ---
