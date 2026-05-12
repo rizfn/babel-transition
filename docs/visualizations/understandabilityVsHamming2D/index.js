@@ -3,7 +3,7 @@ class LatticeSimulation {
         this.L = 64;
         this.B = 16;
         this.gamma = 1;
-        this.alpha = 1;
+        this.alphaOverGamma = 1.2;
         this.mu = 0.001;
         this.step = 0;
         this.isRunning = false;
@@ -170,7 +170,7 @@ class LatticeSimulation {
                 for (const [ni, nj] of neighbors) {
                     const neighbor = this.lattice[ni][nj];
                     const comm = this.communicability(agent.language, neighbor.language);
-                    localFitness += (this.alpha / 4.0) * (comm / this.B);
+                    localFitness += (this.alphaOverGamma / 4.0) * (comm / this.B);
                 }
                 
                 agent.fitness += localFitness;
@@ -236,7 +236,7 @@ class LatticeSimulation {
         
         this.stepDisplay = controlsContainer.append('div')
             .attr('class', 'step-display')
-            .text('Step: 0');
+            .html('Step: <br>0');
         
         this.startButton = controlsContainer.append('button')
             .attr('class', 'control-button')
@@ -253,53 +253,29 @@ class LatticeSimulation {
             .text('Reset')
             .on('click', () => this.reset());
         
-        // Gamma control
-        const gammaContainer = controlsContainer.append('div')
+        // Alpha/Gamma control
+        const alphaGammaContainer = controlsContainer.append('div')
             .attr('class', 'parameter-container');
         
-        gammaContainer.append('label')
+        alphaGammaContainer.append('label')
             .attr('class', 'parameter-label')
-            .text('Gamma:');
+            .text('α/γ:');
         
-        const gammaInput = gammaContainer.append('input')
+        const alphaGammaInput = alphaGammaContainer.append('input')
             .attr('class', 'parameter-input')
             .attr('type', 'range')
             .attr('min', '0')
-            .attr('max', '5')
+            .attr('max', '2')
             .attr('step', '0.1')
-            .attr('value', this.gamma)
+            .attr('value', this.alphaOverGamma)
             .on('input', (event) => {
-                this.gamma = parseFloat(event.target.value);
-                gammaDisplay.text(this.gamma.toFixed(1));
+                this.alphaOverGamma = parseFloat(event.target.value);
+                alphaGammaDisplay.text(this.alphaOverGamma.toFixed(1));
             });
         
-        const gammaDisplay = gammaContainer.append('span')
+        const alphaGammaDisplay = alphaGammaContainer.append('span')
             .attr('class', 'parameter-display')
-            .text(this.gamma.toFixed(1));
-        
-        // Alpha control
-        const alphaContainer = controlsContainer.append('div')
-            .attr('class', 'parameter-container');
-        
-        alphaContainer.append('label')
-            .attr('class', 'parameter-label')
-            .text('Alpha:');
-        
-        const alphaInput = alphaContainer.append('input')
-            .attr('class', 'parameter-input')
-            .attr('type', 'range')
-            .attr('min', '0')
-            .attr('max', '5')
-            .attr('step', '0.1')
-            .attr('value', this.alpha)
-            .on('input', (event) => {
-                this.alpha = parseFloat(event.target.value);
-                alphaDisplay.text(this.alpha.toFixed(1));
-            });
-        
-        const alphaDisplay = alphaContainer.append('span')
-            .attr('class', 'parameter-display')
-            .text(this.alpha.toFixed(1));
+            .text(this.alphaOverGamma.toFixed(1));
         
         // Mu control
         const muContainer = controlsContainer.append('div')
@@ -307,7 +283,7 @@ class LatticeSimulation {
         
         muContainer.append('label')
             .attr('class', 'parameter-label')
-            .text('Mu:');
+            .text('μ:');
         
         const muInput = muContainer.append('input')
             .attr('class', 'parameter-input')
@@ -504,7 +480,7 @@ class LatticeSimulation {
     }
     
     render() {
-        this.stepDisplay.text(`Step: ${this.step}`);
+        this.stepDisplay.html(`Step:<br>${this.step}`);
         
         this.cells
             .datum((d, i) => {
